@@ -23,45 +23,6 @@ object Main {
         println(searchResults)
         FileSaver.saveResultsToCSV(openResults, "data\\results\\open_results.csv")
 
-//        val aggregatedResult1 = filesRDD
-//            .flatMap { file =>
-//                try {
-//                    val session = LogParser.parseLogFile(file)
-//                    SessionProcessor.countSearchesForDocument(session, "ACC_45616")
-//                } catch {
-//                    case e: Exception =>
-//                        Seq.empty[(String, Long)]
-//                }
-//            }
-//            .reduceByKey(_ + _)
-//            .collectAsMap()
-//
-//        val aggregatedResult2 = filesRDD
-//            .flatMap { file =>
-//                try {
-//                    val session = LogParser.parseLogFile(file)
-//                    SessionProcessor.countDocumentOpens(session)
-//                } catch {
-//                    case e: Exception =>
-//                        Seq.empty[((LocalDate, String), Int)]
-//                }
-//            }
-//            .reduceByKey(_ + _)
-//            .collectAsMap()
-//            .toMap
-//        val FileSaver = new FileSaver()
-//        FileSaver.saveResultsToCSV(aggregatedResult2, "src/main/resources/results/open_results.csv")
-
-//        val aggregatedResult = files
-//            .flatMap { file =>
-//                val session = LogParser.parseLogFile(file)
-//                SessionProcessor.countSearchesForDocument(session, "ACC_45616")
-//            }.groupBy(_._1)
-//            .map { case (documentId, counts) =>
-//                val total = counts.map(_._2).sum
-//                (documentId, total)
-//            }
-
         sc.stop()
     }
 }
