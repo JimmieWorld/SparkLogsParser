@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+src/main/scala/org/james_world/LogParser.scala
+src/main/trash/
+
 ### IntelliJ IDEA ###
 .idea/
 .idea/modules.xml
