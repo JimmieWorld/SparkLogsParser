@@ -1,66 +1,115 @@
+package TestEvents
+
+import org.james_world.ErrorStatsAccumulator
 import org.james_world.Events.DocumentOpenEvent
+import org.mockito.Mockito._
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
 import java.time.LocalDateTime
+import org.mockito.MockitoSugar.verifyZeroInteractions
 
-class TestDocumentOpenEvent extends AnyFlatSpec with Matchers {
+class TestDocumentOpenEvent extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
-    "DocumentOpenEvent.parse" should "correctly parse event with valid timestamp" in {
-        val input = Seq("DOC_OPEN 11.08.2020_12:05:20 239407215 LAW_211576")
+    var errorStatsAcc: ErrorStatsAccumulator = _
 
-        val result = DocumentOpenEvent.parse(input)
-
-        result shouldBe defined
-        val event = result.get
-        event.timestamp shouldEqual LocalDateTime.of(2020, 8, 11, 12, 5, 20)
-        event.searchId shouldBe "239407215"
-        event.documentId shouldBe "LAW_211576"
+    override def beforeEach(): Unit = {
+        DocumentOpenEvent.clearSearchTimestamps()
+        errorStatsAcc = mock(classOf[ErrorStatsAccumulator])
+        super.beforeEach()
     }
 
-    it should "use timestamp from searchTimestamps when no timestamp in input" in {
-        DocumentOpenEvent.addSearchTimestamp(
-            Map("239407215" -> LocalDateTime.of(2020, 8, 11, 12, 5, 20))
+    "DocumentOpenEvent.parse" should "correctly parse DOC_OPEN line with valid timestamp" in {
+        val line = List(
+            "DOC_OPEN 25.04.2025_10:00:00 -1234 DOC_123"
+        )
+        val bufferedIt = line.iterator.buffered
+
+        DocumentOpenEvent.addSearchTimestamp(Map("otherId" -> Some(LocalDateTime.now())))
+
+        val result = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+
+        result shouldBe defined
+        val event = result.get.asInstanceOf[DocumentOpenEvent]
+
+        event.searchId shouldBe "-1234"
+        event.documentId shouldBe "DOC_123"
+        event.timestamp shouldBe Some(LocalDateTime.of(2025, 4, 25, 10, 0, 0))
+    }
+
+    it should "use searchTimestamps if no timestamp in line" in {
+        val line = List(
+            "DOC_OPEN -12345 DOC123"
+        )
+        val bufferedIt = line.iterator.buffered
+
+        val knownTime = LocalDateTime.of(2025, 4, 25, 12, 0, 0)
+        DocumentOpenEvent.addSearchTimestamp(Map("-12345" -> Some(knownTime)))
+
+        val result = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+
+        result shouldBe defined
+        val event = result.get.asInstanceOf[DocumentOpenEvent]
+
+        println(errorStatsAcc.value)
+
+        event.timestamp shouldBe Some(knownTime)
+        errorStatsAcc.value shouldBe null
+    }
+
+    it should "return None for lines not starting with DOC_OPEN" in {
+        val line = List(
+            "NOT_DOC_OPEN some text"
+        )
+        val bufferedIt = line.iterator.buffered
+
+        val result = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+
+        result shouldBe empty
+        verifyZeroInteractions(errorStatsAcc)
+    }
+
+    it should "parse DOC_OPEN line with extra spaces or malformed spacing" in {
+        val lines = List(
+            "DOC_OPEN   13.02.2020_21:45:55   -1723438653   RAPS013_286883"
         )
 
-        val input = Seq("DOC_OPEN  239407215 DOC_123")
-        val result = DocumentOpenEvent.parse(input)
+        val bufferedIt = lines.iterator.buffered
 
-        result shouldBe defined
-        result.get.timestamp shouldEqual LocalDateTime.of(2020, 8, 11, 12, 5, 20)
+        val event = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val docOpen = event.get.asInstanceOf[DocumentOpenEvent]
+
+        docOpen.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55).toLocalDate)
+        docOpen.searchId shouldBe "-1723438653"
+        docOpen.documentId shouldBe "RAPS013_286883"
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "return default timestamp when searchId not found in searchTimestamps" in {
-        val input = Seq("DOC_OPEN  239407218 LAW_211576")
-        val result = DocumentOpenEvent.parse(input)
-
-        result shouldBe defined
-        result.get.timestamp shouldEqual LocalDateTime.of(0, 1, 1, 0, 0, 0)
-    }
-
-    it should "parse invalid line and return default timestamp with empty fields" in {
-        val input = Seq("DOC_OPEN This is a broken log line")
-        val result = DocumentOpenEvent.parse(input)
-
-        result shouldBe defined
-        val event = result.get
-        event.timestamp shouldEqual LocalDateTime.of(0, 1, 1, 0, 0, 0)
-        event.searchId shouldBe ""
-        event.documentId shouldBe ""
-    }
-
-    it should "merge new timestamps into searchTimestamps correctly" in {
-        DocumentOpenEvent.addSearchTimestamp(
-            Map("22223" -> LocalDateTime.of(2023, 1, 1, 10, 0))
-        )
-        DocumentOpenEvent.addSearchTimestamp(
-            Map("22224" -> LocalDateTime.of(2023, 1, 2, 10, 0))
+    it should "not fail on multiple DOC_OPEN lines with same searchId" in {
+        val lines = List(
+            "DOC_OPEN 13.02.2020_21:45:55 -1723438653 RAPS013_286883",
+            "DOC_OPEN 13.02.2020_21:46:00 -1723438653 SUR_196608"
         )
 
-        val result1 = DocumentOpenEvent.parse(Seq("DOC_OPEN  22223 LAW_211576"))
-        val result2 = DocumentOpenEvent.parse(Seq("DOC_OPEN  22224 LAW_311578"))
+        val bufferedIt = lines.iterator.buffered
 
-        result1.get.timestamp shouldEqual LocalDateTime.of(2023, 1, 1, 10, 0)
-        result2.get.timestamp shouldEqual LocalDateTime.of(2023, 1, 2, 10, 0)
+        val firstEvent = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+        firstEvent shouldBe defined
+        val docOpen1 = firstEvent.get.asInstanceOf[DocumentOpenEvent]
+        docOpen1.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55).toLocalDate)
+        docOpen1.searchId shouldBe "-1723438653"
+        docOpen1.documentId shouldBe "RAPS013_286883"
+
+        val secondEvent = DocumentOpenEvent.parse(bufferedIt, errorStatsAcc)
+        secondEvent shouldBe defined
+        val docOpen2 = secondEvent.get.asInstanceOf[DocumentOpenEvent]
+        docOpen2.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 46, 0).toLocalDate)
+        docOpen2.searchId shouldBe "-1723438653"
+        docOpen2.documentId shouldBe "SUR_196608"
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 }

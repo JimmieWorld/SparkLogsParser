@@ -1,33 +1,39 @@
 package org.james_world.Extractors
 
-import scala.util.matching.Regex
-import scala.util.matching.Regex.Match
+import org.james_world.ErrorStatsAccumulator
+import scala.collection.BufferedIterator
 
 object EventAttributesExtractors {
-    private val documentPattern: Regex = "[A-Z]+_\\d+".r
-    private val searchResultPattern: Regex = "(?<=\\s|^)-?\\d+\\s".r
-    private val quickSearchQueryPattern: Regex = "\\{([^\\}]+)\\}".r
 
-    def extractDocumentId(line: String): String = {
-        documentPattern.findFirstIn(line).getOrElse("")
-    }
+    object SearchResultExtractor {
+        def extractSearchResult(
+            bufferedIt: BufferedIterator[String],
+            errorStatsAcc: ErrorStatsAccumulator
+        ): (String, Seq[String]) = {
+            if (!bufferedIt.hasNext) {
+                errorStatsAcc.add(("MissingSearchResult", "Expected search result line, but input ended."))
+                return ("", Nil)
+            }
 
-    def extractQueryId(line: String): String = {
-        searchResultPattern.findFirstIn(line).map(_.trim).getOrElse("")
-    }
+            val line = bufferedIt.head
 
-    def extractDocuments(line: String): Seq[String] = {
-        documentPattern.findAllIn(line).toSeq
-    }
+            if (line.startsWith("DOC_OPEN") || line.startsWith("SESSION_END")) {
+                errorStatsAcc.add(("UnexpectedEndOfSearch",
+                    s"Expected search result line, got unexpected event start: $line"))
+                return ("", Nil)
+            }
 
-    def extractQuery(line: String): Option[String] = {
-        if (line.startsWith("$")) Some(line.stripPrefix("$")) else None
-    }
+            val fullLine = bufferedIt.next()
+            val splitFullLine = fullLine.trim.split("\\s+")
 
-    def extractQuickSearchQuery(line: String): String = {
-        quickSearchQueryPattern.findFirstMatchIn(line) match {
-            case Some(m) => m.group(1).trim
-            case None => line.split("\\s+").drop(1).mkString(" ").trim
+            if (splitFullLine.length < 2) {
+                errorStatsAcc.add(("SearchDocumentsMissing", s"No documents found in search line: $line"))
+            }
+
+            val searchId = splitFullLine.head
+            val relatedDocuments = splitFullLine.tail
+
+            (searchId, relatedDocuments)
         }
     }
 }

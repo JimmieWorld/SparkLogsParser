@@ -1,97 +1,139 @@
+package TestEvents
+
+import org.james_world.ErrorStatsAccumulator
 import org.james_world.Events.QuickSearchEvent
+import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
+import org.mockito.MockitoSugar.verifyZeroInteractions
+import org.scalatest.BeforeAndAfterEach
 import java.time.LocalDateTime
 
-class TestQuickSearchEvent extends AnyFlatSpec with Matchers {
+class TestQuickSearchEvent extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
-    "QuickSearchEvent.parse" should "correctly parse valid input with timestamp, query and documents" in {
-        val lines = Seq(
-            "QS Tue,_11_Aug_2020_12:05:06_+0300 {198н}",
-            "239407215 LAW_284744 LAW_213991 LAW_356590 LAW_323781"
-        )
+    var errorStatsAcc: ErrorStatsAccumulator = _
 
-        val result = QuickSearchEvent.parse(lines)
-
-        result shouldBe defined
-        val event = result.get
-        event.timestamp shouldEqual LocalDateTime.of(2020, 8, 11, 12, 5, 6)
-        event.searchId shouldBe "239407215"
-        event.queryText shouldBe "198н"
-        event.relatedDocuments should contain theSameElementsAs Seq("LAW_284744", "LAW_213991", "LAW_356590", "LAW_323781")
+    override def beforeEach(): Unit = {
+        errorStatsAcc = mock(classOf[ErrorStatsAccumulator])
+        super.beforeEach()
     }
 
-    it should "parse query text correctly when surrounded by braces" in {
+    "QuickSearchEvent.parse" should "parse a valid QS line with timestamp and result line" in {
         val lines = Seq(
-            "QS SomeRandomDate {test query here}",
-            "abc123 DOC_1 DOC_2"
+            "QS Thu,_13_Feb_2020_21:38:09_+0300 {отказ в назначении экспертизы}",
+            "-1723438653 RAPS001_95993 SUR_196608 SUR_192860"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
 
-        event.queryText shouldEqual "test query here"
+        event shouldBe defined
+
+        val qs = event.get.asInstanceOf[QuickSearchEvent]
+
+        qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+        qs.searchId shouldBe "-1723438653"
+        qs.queryText shouldBe "отказ в назначении экспертизы"
+        qs.relatedDocuments should contain allOf ("RAPS001_95993", "SUR_196608")
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-
-    it should "extract searchId from last line" in {
-        val lines = Seq(
-            "QS dummy line",
-            "-123 DOC_1 DOC_2 DOC_3"
+    it should "parse QS line with simple date format" in {
+        val lines = List(
+            "QS 13.02.2020_21:38:09 {пенсия работающим пенсионерам}",
+            "-981704369 PSR_70597 PKBO_22363"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
 
-        event.searchId shouldEqual "-123"
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val qs = event.get.asInstanceOf[QuickSearchEvent]
+
+        qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+        qs.queryText shouldBe "пенсия работающим пенсионерам"
+        qs.searchId shouldBe "-981704369"
+        qs.relatedDocuments should contain allOf ("PSR_70597", "PKBO_22363")
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "extract multiple related documents" in {
-        val lines = Seq(
-            "QS dummy date {}",
-            "abc123 DOC_1 DOC_2 DOC_3 DOC_4"
+    it should "log error if QS line is malformed" in {
+        val lines = List(
+            "NOT_QS invalid query text",
+            "-1234 DOC123"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
 
-        event.relatedDocuments shouldEqual Seq("DOC_1", "DOC_2", "DOC_3", "DOC_4")
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe empty
+        verify(errorStatsAcc).add((
+            "QuickSearchInvalidFormat",
+            "Expected QS line, got: NOT_QS invalid query text..."
+        ))
     }
 
-    it should "handle empty document list gracefully" in {
-        val lines = Seq(
-            "QS 31.07.2020_17:11:47 {Some long query}",
-            "123456"
+    it should "log error if no result line after QS" in {
+        val lines = List(
+            "QS 13.02.2020_21:38:09 {запрос}"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
 
-        event.relatedDocuments shouldEqual Seq.empty
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val qs = event.get.asInstanceOf[QuickSearchEvent]
+
+        qs.searchId shouldBe ""
+        qs.relatedDocuments shouldBe empty
+        qs.queryText shouldBe "запрос"
+
+        verify(errorStatsAcc).add((
+            "QuickSearchMissingSearchResult",
+            "[QS] Expected search result line after: QS 13.02.2020_21:38:09 {запрос}"
+        ))
     }
 
-    it should "parse complex queries inside braces" in {
-        val lines = Seq(
-            "QS 2023-01-01T12:00:00Z {Некоммерческой организации «Региональный фонд капитального ремонта многоквартирных домов» омская область}",
-            "search987 DOC_X DOC_Y DOC_Z"
+    it should "support multiple spaces or formatting variations" in {
+        val lines = List(
+            "QS   13.02.2020_21:38:09   {разные пробелы}",
+            "-1234 DOC123"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
 
-        event.queryText shouldEqual "Некоммерческой организации «Региональный фонд капитального ремонта многоквартирных домов» омская область"
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val qs = event.get.asInstanceOf[QuickSearchEvent]
+        qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+        qs.queryText shouldBe "разные пробелы"
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "ignore extra spaces around query in braces" in {
-        val lines = Seq(
-            "QS 11.08.2020_12:05:06 {   spaced query text   }",
-            "search123 DOC_1 DOC_2"
+    it should "parse QS without related documents" in {
+        val lines = List(
+            "QS 13.02.2020_21:38:09 {пустой результат}",
+            "-1234"
         )
 
-        val result = QuickSearchEvent.parse(lines)
-        val event = result.get
+        val bufferedIt = lines.iterator.buffered
 
-        event.queryText shouldEqual "spaced query text"
+        val event = QuickSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val qs = event.get.asInstanceOf[QuickSearchEvent]
+
+        qs.queryText shouldBe "пустой результат"
+        qs.searchId shouldBe "-1234"
+        qs.relatedDocuments shouldBe empty
+
+        errorStatsAcc.value shouldBe null
     }
 }

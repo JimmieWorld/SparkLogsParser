@@ -3,49 +3,52 @@ package org.james_world.Extractors
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import scala.util.matching.Regex
-import scala.util.{Success, Try}
+import org.james_world.ErrorStatsAccumulator
 
 object DateTimeExtractor {
-    private case class FormatDefinition(pattern: Regex, formatter: DateTimeFormatter)
 
-    private val formats: List[FormatDefinition] = List(
-        FormatDefinition("""[A-Z][a-z]{2}, \d{1,2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}:\d{2}""".r,
-            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss", Locale.ENGLISH)),
-        FormatDefinition("""\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}:\d{2}""".r,
-            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")),
-        FormatDefinition("""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}""".r,
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")),
-        FormatDefinition("""\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}""".r,
-            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")),
-        FormatDefinition("""\d{2}\.\d{2}\.\d{2} \d{2}:\d{2}:\d{2}""".r,
-            DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss"))
+    private val defaultFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss")
+    private val quickSearchFormatters = List(
+        DateTimeFormatter.ofPattern("EEE,_d_MMM_yyyy_HH:mm:ss", Locale.ENGLISH),
+        defaultFormat
     )
+    private val cardSearchFormatters = quickSearchFormatters
 
-    def extractTimestamp(line: String): LocalDateTime = {
-        val cleaned = line
+    def extractTimestamp(
+        line: String,
+        eventType: String,
+        errorStatsAcc: ErrorStatsAccumulator
+    ): Option[LocalDateTime] = {
+        val dateString = line
             .trim
-            .replaceAll("([+-]\\d{4})$", "")
-            .replaceAll("_", " ")
+            .replaceAll("(_[+-]\\d{4})$", "")
             .trim
 
-        val dateStr = formats
-            .view
-            .flatMap { format =>
-                val pattern = format.pattern
-                pattern.findFirstIn(cleaned)
+        val formatters = eventType match {
+            case "SESSION_START" => List(defaultFormat)
+            case "QS" => quickSearchFormatters
+            case "CARD_SEARCH_START" => cardSearchFormatters
+            case "DOC_OPEN" => List(defaultFormat)
+            case "SESSION_END" => List(defaultFormat)
+            case _ => List.empty
+        }
+
+        val result = formatters.view.flatMap { formatter =>
+            try {
+                Some(LocalDateTime.parse(dateString, formatter))
+            } catch {
+                case _: Exception => None
             }
-            .headOption
+        }.headOption
 
-        dateStr match {
-            case Some(datePart) =>
-                formats
-                    .view
-                    .map(fd => Try(LocalDateTime.parse(datePart, fd.formatter)))
-                    .collectFirst { case Success(dt) => dt }
-                    .getOrElse(LocalDateTime.of(0, 1, 1, 0, 0, 0))
-            case _ =>
-                LocalDateTime.of(0, 1, 1, 0, 0, 0)
+        result match {
+            case Some(dt) => Some(dt)
+            case None =>
+                errorStatsAcc.add((
+                    "InvalidTimestampFormat",
+                    s"[$eventType] Failed to parse timestamp from line: $line"
+                ))
+                None
         }
     }
 }

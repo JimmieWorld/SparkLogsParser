@@ -1,78 +1,135 @@
+package TestEvents
+
+import org.james_world.ErrorStatsAccumulator
 import org.james_world.Events.CardSearchEvent
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
+import org.mockito.Mockito._
+import org.mockito.MockitoSugar.verifyZeroInteractions
+import org.scalatest.BeforeAndAfterEach
 import java.time.LocalDateTime
 
-class TestCardSearchEvent extends AnyFlatSpec with Matchers {
+class TestCardSearchEvent extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
-    "CardSearchEvent.parse" should "correctly parse valid input lines" in {
-        val input = Seq(
-            "CARD_SEARCH_START 23.07.2020_22:03:45",
-            "$0 PBI_95949",
-            "CARD_SEARCH_END",
-            "5992653 PBI_95949"
-        )
+    var errorStatsAcc: ErrorStatsAccumulator = _
 
-        val result = CardSearchEvent.parse(input)
-
-        result shouldBe defined
-
-        val event = result.get
-        event.timestamp shouldEqual LocalDateTime.of(2020, 7, 23, 22, 3, 45)
-        event.searchId shouldBe "5992653"
-        event.queriesTexts should contain theSameElementsAs Seq("0 PBI_95949")
-        event.relatedDocuments should contain theSameElementsAs Seq("PBI_95949")
+    override def beforeEach(): Unit = {
+        errorStatsAcc = mock(classOf[ErrorStatsAccumulator])
+        super.beforeEach()
     }
 
-    it should "handle multiple queries correctly" in {
-        val input = Seq(
-            "CARD_SEARCH_START 23.07.2020_22:03:45",
-            "$134 обзор вс по  закупкам",
-            "$0 PBI_95949",
-            "$1 PBI_95949",
+    "CardSearchEvent.parse" should "parse a simple card search with one query line and result" in {
+        val lines = List(
+            "CARD_SEARCH_START 13.02.2020_21:59:25",
+            "$134 основные средства федеральный стандарт",
             "CARD_SEARCH_END",
-            "5992653 PBI_95949"
+            "11104369 PKBO_31048 LAW_283870"
         )
 
-        val result = CardSearchEvent.parse(input)
+        val bufferedIt = lines.iterator.buffered
 
-        result shouldBe defined
-        val event = result.get
-        event.searchId shouldBe "5992653"
-        event.queriesTexts should contain theSameElementsAs Seq(
-            "134 обзор вс по  закупкам",
-            "0 PBI_95949",
-            "1 PBI_95949"
-        )
-        event.relatedDocuments should contain theSameElementsAs Seq("PBI_95949")
+        val event = CardSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val cardSearch = event.get.asInstanceOf[CardSearchEvent]
+
+        cardSearch.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 59, 25))
+        cardSearch.queriesTexts should contain theSameElementsAs Seq("134 основные средства федеральный стандарт")
+        cardSearch.searchId shouldEqual "11104369"
+        cardSearch.relatedDocuments should contain allOf ("PKBO_31048", "LAW_283870")
+
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse even if no queries are present between first and last line" in {
-        val input = Seq(
-            "CARD_SEARCH_START 23.07.2020_21:58:57",
+    it should "parse card search with multiple query lines" in {
+        val lines = List(
+            "CARD_SEARCH_START Thu,_13_Feb_2020_21:59:25_+0300",
+            "$134 основные средства федеральный стандарт",
+            "$135 налог на имущество",
+            "CARD_SEARCH_END",
+            "11104369 PBI_238073 LAW_344754"
+        )
+
+        val bufferedIt = lines.iterator.buffered
+
+        val event = CardSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val cardSearch = event.get.asInstanceOf[CardSearchEvent]
+
+        cardSearch.queriesTexts should contain theSameElementsAs Seq(
+            "134 основные средства федеральный стандарт",
+            "135 налог на имущество"
+        )
+        cardSearch.searchId shouldEqual "11104369"
+        cardSearch.relatedDocuments should contain allOf ("PBI_238073", "LAW_344754")
+
+        verifyZeroInteractions(errorStatsAcc)
+    }
+
+    it should "fail if CARD_SEARCH_END is missing" in {
+        val lines = List(
+            "CARD_SEARCH_START 13.02.2020_21:59:25",
+            "$134 основные средства федеральный стандарт"
+        )
+
+        val bufferedIt = lines.iterator.buffered
+
+        val event = CardSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val cardSearch = event.get.asInstanceOf[CardSearchEvent]
+        cardSearch.queriesTexts should contain theSameElementsAs Seq(
+            "134 основные средства федеральный стандарт"
+        )
+
+        verify(errorStatsAcc).add(("CardSearchMalformedEvent", "Missing CARD_SEARCH_END"))
+    }
+
+    it should "fail on unexpected line instead of CARD_SEARCH_END" in {
+        val lines = List(
+            "CARD_SEARCH_START 13.02.2020_21:59:25",
+            "$134 основные средства федеральный стандарт",
+            "SESSION_END 13.02.2020_22:07:57"
+        )
+
+        val bufferedIt = lines.iterator.buffered
+
+        val event = CardSearchEvent.parse(bufferedIt, errorStatsAcc)
+
+        event shouldBe defined
+        val cardSearch = event.get.asInstanceOf[CardSearchEvent]
+        cardSearch.queriesTexts should contain theSameElementsAs Seq(
+            "134 основные средства федеральный стандарт"
+        )
+
+        verify(errorStatsAcc).add((
+            "CardSearchUnexpectedLine",
+            "Expected CARD_SEARCH_END, got: SESSION_END 13.02.2020_22:07:57"
+        ))
+    }
+
+    it should "parse without result line after CARD_SEARCH_END" in {
+        val lines = List(
+            "CARD_SEARCH_START 13.02.2020_21:59:25",
+            "$134 основные средства федеральный стандарт",
             "CARD_SEARCH_END"
         )
 
-        val result = CardSearchEvent.parse(input)
+        val bufferedIt = lines.iterator.buffered
 
-        result shouldBe defined
-        val event = result.get
-        event.queriesTexts shouldBe empty
-        event.relatedDocuments shouldBe empty
-    }
+        val event = CardSearchEvent.parse(bufferedIt, errorStatsAcc)
 
-    it should "parse even if no related documents are present" in {
-        val input = Seq(
-            "CARD_SEARCH_START 23.07.2020_21:58:57",
-            "$134 обособленное подразделение НДС",
-            "CARD_SEARCH_END"
-        )
+        event shouldBe defined
+        val cardSearch = event.get.asInstanceOf[CardSearchEvent]
 
-        val result = CardSearchEvent.parse(input)
+        cardSearch.queriesTexts should contain theSameElementsAs Seq("134 основные средства федеральный стандарт")
+        cardSearch.searchId shouldEqual ""
+        cardSearch.relatedDocuments shouldEqual Seq.empty
 
-        result shouldBe defined
-        val event = result.get
-        event.relatedDocuments shouldBe empty
+        verify(errorStatsAcc).add((
+            "CardSearchMissingSearchResult",
+            "[CARD_SEARCH_START] Expected search result line after CARD_SEARCH_END"
+        ))
     }
 }

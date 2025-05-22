@@ -1,73 +1,87 @@
+package TestExtractors
+
+import org.james_world.ErrorStatsAccumulator
 import org.james_world.Extractors.DateTimeExtractor
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-
+import org.mockito.Mockito._
+import org.mockito.MockitoSugar.verifyZeroInteractions
+import org.scalatest.BeforeAndAfterEach
 import java.time.LocalDateTime
 
-class TestDateTimeExtractor extends AnyFlatSpec with Matchers {
+class TestDateTimeExtractor extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
-    "DateTimeExtractor.extractTimestamp" should "parse valid date in EEE,_d_MMM_yyyy_HH:mm:ss_Z format" in {
-        val line = "Thu,_5_Oct_2023_14:30:00_+0300"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+    var errorStatsAcc: ErrorStatsAccumulator = _
+
+    override def beforeEach(): Unit = {
+        errorStatsAcc = mock(classOf[ErrorStatsAccumulator])
+        super.beforeEach()
     }
 
-    it should "parse valid date in EEE, d MMM yyyy HH:mm:ss Z format" in {
-        val line = "Thu, 5 Oct 2023 14:30:00 +0300"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+    "extractTimestamp" should "parse default format (dd.MM.yyyy_HH:mm:ss)" in {
+        val line = "13.02.2020_21:37:23"
+        val result = DateTimeExtractor.extractTimestamp(line, "SESSION_START", errorStatsAcc)
+
+        result shouldBe defined
+        result.get shouldEqual LocalDateTime.of(2020, 2, 13, 21, 37, 23)
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse 'Some_Text 23.07.2020_22:03:45'" in {
-        val line = "CARD_SEARCH_START 23.07.2020_22:03:45"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2020, 7, 23, 22, 3, 45)
+    it should "parse RFC822-like format for QS event" in {
+        val line = "Thu,_13_Feb_2020_21:38:09_+0300"
+        val result = DateTimeExtractor.extractTimestamp(line, "QS", errorStatsAcc)
+
+        result shouldBe defined
+        result.get shouldEqual LocalDateTime.of(2020, 2, 13, 21, 38, 9)
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse 'Some Text 23.07.2020_22:03:45'" in {
-        val line = "Some Text 23.07.2020_22:03:45"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2020, 7, 23, 22, 3, 45)
+    it should "fallback to default format for QS if RFC fails" in {
+        val line = "13.02.2020_21:38:09"
+        val result = DateTimeExtractor.extractTimestamp(line, "QS", errorStatsAcc)
+
+        result shouldBe defined
+        result.get shouldEqual LocalDateTime.of(2020, 2, 13, 21, 38, 9)
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse valid date in dd.MM.yyyy_HH:mm:ss format" in {
-        val line = "05.10.2023_14:30:00"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+    it should "parse timestamp for CARD_SEARCH_START" in {
+        val line = "Thu,_13_Feb_2020_21:59:25_+0300"
+        val result = DateTimeExtractor.extractTimestamp(line, "CARD_SEARCH_START", errorStatsAcc)
+
+        result shouldBe defined
+        result.get shouldEqual LocalDateTime.of(2020, 2, 13, 21, 59, 25)
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse valid date in yyyy-MM-dd HH:mm:ss format" in {
-        val line = "2023-10-05 14:30:00"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+    it should "fail on invalid date and log error" in {
+        val line = "BAD_DATE_FORMAT"
+        val result = DateTimeExtractor.extractTimestamp(line, "QS", errorStatsAcc)
+
+        result shouldBe None
+        verify(errorStatsAcc).add((
+            "InvalidTimestampFormat",
+            "[QS] Failed to parse timestamp from line: BAD_DATE_FORMAT"
+        ))
     }
 
-    it should "parse valid date in dd/MM/yyyy HH:mm:ss format" in {
-        val line = "05/10/2023 14:30:00"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+    it should "parse DOC_OPEN timestamps using default format" in {
+        val line = "13.02.2020_21:45:55"
+        val result = DateTimeExtractor.extractTimestamp(line, "DOC_OPEN", errorStatsAcc)
+
+        result shouldBe defined
+        result.get shouldEqual LocalDateTime.of(2020, 2, 13, 21, 45, 55)
+        verifyZeroInteractions(errorStatsAcc)
     }
 
-    it should "parse valid date in dd.MM.yy HH:mm:ss format" in {
-        val line = "05.10.23 14:30:00"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
-    }
+    it should "return None if no formatter can parse the date" in {
+        val line = "INVALID_DATE_STRING"
+        val result = DateTimeExtractor.extractTimestamp(line, "SESSION_START", errorStatsAcc)
 
-    it should "return default (year 0) for empty string" in {
-        val result = DateTimeExtractor.extractTimestamp("")
-        result shouldEqual LocalDateTime.of(0, 1, 1, 0, 0, 0)
-    }
-
-    it should "return default for garbage input" in {
-        val line = "This is not a date at all!"
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(0, 1, 1, 0, 0, 0)
-    }
-
-    it should "trim whitespace before parsing" in {
-        val line = "   2023-10-05 14:30:00   "
-        val result = DateTimeExtractor.extractTimestamp(line)
-        result shouldEqual LocalDateTime.of(2023, 10, 5, 14, 30, 0)
+        result shouldBe None
+        verify(errorStatsAcc).add((
+            "InvalidTimestampFormat",
+            "[SESSION_START] Failed to parse timestamp from line: INVALID_DATE_STRING"
+        ))
     }
 }

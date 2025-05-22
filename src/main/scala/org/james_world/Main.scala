@@ -1,86 +1,140 @@
 package org.james_world
 
-import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.james_world.Events.{CardSearchEvent, DocumentOpenEvent, QuickSearchEvent}
+import org.apache.spark.rdd.RDD
+import org.james_world.ErrorStatsAccumulatorDef.ErrorStats
+import org.james_world.Parsers.TextFileParser
+
 import java.io.File
 import java.time.LocalDate
 import scala.io.Source
 import scala.util.Using
-import org.james_world.CsvFileSavers
 
 object Main {
 
-    /**
-     * Метод для подсчета количества раз, когда искали определенный документ в карточке поиска.
-     *
-     * @param documentId Идентификатор документа (например, "ACC_45616").
-     * @param sessions список объектов сессий из лога
-     * @return Количество раз, когда искали указанный документ.
-     */
-    def countSearchesForDocument(sessions: RDD[Session], documentId: String): Long = {
-        sessions.flatMap { session =>
-            session.events.collect {
-                case cs: CardSearchEvent if cs.queriesTexts.contains(documentId) => 1L
-            }
-        }.fold(0)(_ + _)
-    }
-
-    /**
-     * Метод для подсчета количества открытий документов, найденных через быстрый поиск, за каждый день.
-     *
-     * @param sessions список объектов сессий из лога
-     * @return Список элементов типа (date, documentId, count).
-     */
-    def countDocumentOpens(sessions: RDD[Session]): Seq[(LocalDate, String, Int)] = {
-        sessions.flatMap { session =>
-            val quickSearches = session.events.collect {
-                case qs: QuickSearchEvent => (qs.timestamp.toLocalDate, qs.searchId, qs.relatedDocuments)
-            }
-
-            val docsOpen = session.events.collect {
-                case docOpen: DocumentOpenEvent =>
-                    val isQuickSearchDocOpen = quickSearches.exists { case (_,search,_) =>
-                        search == docOpen.searchId
-                    }
-                    if (isQuickSearchDocOpen) Some((docOpen.timestamp.toLocalDate, docOpen.documentId)) else None
-                case _ => None
-            }.flatten
-
-            docsOpen.map(dateDoc => dateDoc -> 1)
-        }
-        .reduceByKey(_ + _)
-        .map { case ((date, docId), count) => (date, docId, count) }
-        .collect()
-        .toSeq
-    }
-
     def main(args: Array[String]): Unit = {
-        val conf = new SparkConf().setAppName("ConsultantPlusLogs").setMaster("local[*]")
-        val sc = new SparkContext(conf)
+        val sc = initSparkContext()
+        val errorStatsAcc = new ErrorStatsAccumulator()
+        sc.register(errorStatsAcc)
 
-        val filePath = "src/main/resources/data"
-        val files = new File(filePath).listFiles()
+        try {
+            val sessionsRDD = processFiles(sc, filePath = "src/main/resources/data", errorStatsAcc)
+
+            val res1 = Tasks.task1(sessionsRDD, "ACC_45616")
+            val res2 = Tasks.task2(sessionsRDD)
+
+            println(s"Task1: $res1")
+            CsvFileSavers.saveResultsToCSV(
+                res2,
+                "src/main/resources/results/task2_results.csv"
+            )(tuple => Seq(tuple._1, tuple._2, tuple._3))
+
+            saveErrorStatistics(errorStatsAcc.value, "src/main/resources/results/errors.csv")
+
+        } catch {
+            case e: Exception =>
+                println(s"[ERROR] Failed to process files: ${e.getMessage}")
+                e.printStackTrace()
+        } finally {
+            sc.stop()
+        }
+    }
+
+    private def initSparkContext(): SparkContext = {
+        val conf = new SparkConf()
+            .setAppName("SessionProcessor")
+            .setMaster("local[*]")
+            .set("spark.ui.enabled", "false")
+
+        new SparkContext(conf)
+    }
+
+    private def processFiles(
+        sc: SparkContext,
+        filePath: String,
+        errorStatsAcc: ErrorStatsAccumulator
+    ): RDD[Session] = {
+        val dir = new File(filePath)
+        if (!dir.exists() || !dir.isDirectory) {
+            throw new IllegalArgumentException(s"Invalid directory path: $filePath")
+        }
+
+        val files = dir.listFiles().toSeq
         val filesRDD = sc.parallelize(files)
 
-        val sessionsRDD: RDD[Session] = filesRDD.map { file =>
+        filesRDD.map { file =>
             val lines = Using(Source.fromFile(file, "Windows-1251")) { source =>
                 source.getLines().toSeq
             }.getOrElse {
+                errorStatsAcc.add(("FileReadFailed", s"Failed to read file: ${file.getAbsolutePath}"))
                 Seq.empty
             }
-            Session.processLines(lines, fileName = file.getName)
+
+            TextFileParser.processLines(lines, fileName = file.getName, errorStatsAcc)
+        }
+    }
+
+    private def saveErrorStatistics(
+        errorStats: ErrorStats,
+        outputPath: String
+    ): Unit = {
+
+        val errorSeq = errorStats.toSeq.map { case (errorType, (count, samples)) =>
+            (errorType, count.toString, samples.mkString("; "))
         }
 
-        val res1 = countSearchesForDocument(sessionsRDD, "ACC_45616")
-        val res2 = countDocumentOpens(sessionsRDD)
-
-        println(s"Task1: $res1")
         CsvFileSavers.saveResultsToCSV(
-            res2,
-            "src\\main\\resources\\results\\open_results.csv"
-        ) (tuple => Seq(tuple._1, tuple._2, tuple._3))
-
-        sc.stop()
+            data = errorSeq,
+            outputPath = outputPath,
+            header = Some(Seq("ErrorType", "Count", "Samples"))
+        ) { case (errorType, countStr, samplesStr) =>
+            Seq(errorType, countStr, samplesStr)
+        }
     }
+
+    private object Tasks {
+        /**
+         * Подсчёт количества раз, когда искали определенный документ в карточке поиска.
+         *
+         * @param documentId Идентификатор документа (например, "ACC_45616").
+         * @param sessions список объектов сессий из лога
+         * @return Количество раз, когда искали указанный документ.
+         */
+        def task1(sessions: RDD[Session], documentId: String): Int = {
+            sessions
+                .flatMap { session =>
+                    session.cardSearches.filter { cs =>
+                        cs.relatedDocuments.contains(documentId)
+                    }
+                }
+                .count()
+                .toInt
+        }
+
+        /**
+         * Подсчёт количества открытий документов, найденных через быстрый поиск, за каждый день.
+         *
+         * @param sessions список объектов сессий из лога
+         * @return Список элементов типа (date, documentId, count).
+         */
+        def task2(sessions: RDD[Session]): Seq[(LocalDate, String, Int)] = {
+            sessions
+                .flatMap { session =>
+                    val quickSearchIds = session.quickSearches.map(_.searchId).toSet
+
+                    session.docOpens.flatMap { docOpen =>
+                        docOpen.timestamp.map { ts =>
+                            (ts.toLocalDate, docOpen.documentId)
+                        }.filter(_ => quickSearchIds.contains(docOpen.searchId))
+                    }
+                }
+                .map(dateDoc => (dateDoc, 1))
+                .reduceByKey(_ + _)
+                .map { case ((date, docId), count) => (date, docId, count) }
+                .collect()
+                .toSeq
+        }
+    }
+
+
 }

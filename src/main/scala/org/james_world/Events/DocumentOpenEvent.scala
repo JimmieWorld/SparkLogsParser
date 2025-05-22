@@ -1,10 +1,13 @@
 package org.james_world.Events
 
+import org.james_world.ErrorStatsAccumulator
 import org.james_world.Extractors.{DateTimeExtractor, EventAttributesExtractors}
+
 import java.time.LocalDateTime
+import scala.collection.BufferedIterator
 
 case class DocumentOpenEvent(
-    timestamp: LocalDateTime,
+    timestamp: Option[LocalDateTime],
     searchId: String,
     documentId: String
 ) extends Event
@@ -12,14 +15,28 @@ case class DocumentOpenEvent(
 object DocumentOpenEvent extends EventParser {
     private var searchTimestamps: Map[String, LocalDateTime] = Map.empty
 
-    override def parse(lines: Seq[String]): Option[DocumentOpenEvent] = {
-        if (lines.isEmpty) return None
+    def clearSearchTimestamps(): Unit = {
+        searchTimestamps = Map.empty
+    }
+    override def parse(
+        bufferedIt: BufferedIterator[String],
+        errorStatsAcc: ErrorStatsAccumulator
+    ): Option[Event] = {
+        if (!bufferedIt.hasNext) return None
 
-        val searchId = EventAttributesExtractors.extractQueryId(lines.head)
-        val documentId = EventAttributesExtractors.extractDocumentId(lines.head)
-        val rawTimestamp = DateTimeExtractor.extractTimestamp(lines.head)
-        val timestamp = if (rawTimestamp == LocalDateTime.of(0, 1, 1, 0, 0, 0)) {
-            searchTimestamps.getOrElse(searchId, LocalDateTime.of(0, 1, 1, 0, 0, 0))
+        val line = bufferedIt.head
+        val eventName = "DOC_OPEN"
+        if (!line.startsWith(eventName)) return None
+
+        val lineWithDoc = bufferedIt.next()
+        val splitLineWithDoc = lineWithDoc.split("\\s+")
+
+        val searchId = splitLineWithDoc(splitLineWithDoc.length - 2)
+        val documentId = splitLineWithDoc.last
+
+        val rawTimestamp = DateTimeExtractor.extractTimestamp(splitLineWithDoc(1), eventName, errorStatsAcc)
+        val timestamp = if (rawTimestamp.isEmpty) {
+            searchTimestamps.get(searchId)
         } else {
             rawTimestamp
         }
@@ -31,7 +48,10 @@ object DocumentOpenEvent extends EventParser {
         ))
     }
 
-    def addSearchTimestamp(timestamp: Map[String, LocalDateTime]): Unit = {
-        searchTimestamps ++= timestamp
+    def addSearchTimestamp(timestamp: Map[String, Option[LocalDateTime]]): Unit = {
+        val validTimestamps = timestamp.collect {
+            case (id, Some(dt)) => id -> dt  // берём только те, где dt определён
+        }
+        searchTimestamps ++= validTimestamps
     }
 }
