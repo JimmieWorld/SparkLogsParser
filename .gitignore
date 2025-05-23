@@ -12,6 +12,7 @@ src/main/trash/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.scalafmt.conf
 *.iws
 *.iml
 *.ipr

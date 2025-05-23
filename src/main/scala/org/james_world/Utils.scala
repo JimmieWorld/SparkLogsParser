@@ -2,7 +2,7 @@ package org.james_world
 
 import java.io.{BufferedWriter, File, FileWriter}
 
-object CsvFileSavers {
+object Utils {
     /**
      * Универсальный метод для сохранения результатов в CSV.
      *
@@ -10,13 +10,15 @@ object CsvFileSavers {
      * @param outputPath Путь для сохранения CSV-файла.
      * @param header Названия колонок.
      * @param delimiter Разделитель (по умолчанию ",").
+     * @param decompose Функция, которая преобразует элемент типа A
+     *                  в набор значений, подходящих для записи в CSV
      */
-    def saveResultsToCSV[A](
-        data: Seq[A],
+    def saveToCSV[A](
+        data: Array[A],
         outputPath: String,
-        header: Option[Seq[String]] = None,
+        header: Option[Array[String]] = None,
         delimiter: String = ","
-    )(decompose: A => Seq[Any]): Unit = {
+    )(decompose: A => Array[Any]): Unit = {
         val file = new File(outputPath)
         val writer = new BufferedWriter(new FileWriter(file))
 
