@@ -1,19 +1,20 @@
 package testTasks
 
-import org.james_world.Session
-import org.james_world.events.{CardSearch, DocumentOpen, QuickSearch}
-import org.james_world.tasks.Task2
+import org.testTask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
+import org.testTask.parser.Session
+import org.testTask.tasks.Task2
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.time.{LocalDate, LocalDateTime}
+import java.nio.file.{Files, Paths}
+import java.time.LocalDateTime
 
 class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
 
   val sessionStart: Option[LocalDateTime] = Some(LocalDateTime.of(2023, 8, 1, 12, 0))
   val sessionEnd: Option[LocalDateTime] = Some(LocalDateTime.of(2023, 8, 1, 12, 5))
 
-   "countDocumentOpens" should "correctly count document opens after quick search" in {
+  "Task2.execute" should "correctly count document opens after quick search" in {
     val session = Session(
       sessionId = "session1",
       sessionStart = sessionStart,
@@ -48,12 +49,12 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       )
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
+    Task2.execute(sc.parallelize(Seq(session)))
 
-    val expected = Seq(
-      (LocalDate.of(2023, 8, 1), "ACC_45616", 2)
-    )
-    result shouldBe expected
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
+    lines.size shouldBe 1
+
+    lines.toArray shouldBe Array("2023-08-01,ACC_45616,2")
   }
 
   it should "not count document opens with quick search" in {
@@ -80,8 +81,9 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
-    result shouldBe Seq.empty
+    Task2.execute(sc.parallelize(Seq(session)))
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
+    lines.toArray shouldBe Array.empty
   }
 
   it should "not count document opens without quick search" in {
@@ -116,8 +118,10 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
-    result shouldBe empty
+    Task2.execute(sc.parallelize(Seq(session)))
+
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
+    lines.toArray shouldBe Array.empty
   }
 
   it should "count document opens across multiple sessions" in {
@@ -167,13 +171,12 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session1, session2)))
+    Task2.execute(sc.parallelize(Seq(session1, session2)))
 
-    val expected = Seq(
-      (LocalDate.of(2023, 8, 1), "ACC_45616", 2)
-    )
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
 
-    result shouldBe expected
+    lines.size shouldBe 1
+    lines.toArray shouldBe Array("2023-08-01,ACC_45616,2")
   }
 
   it should "count document opens on different dates and sessions separately" in {
@@ -223,14 +226,14 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session1, session2)))
+    Task2.execute(sc.parallelize(Seq(session1, session2)))
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
 
-    val expected = Seq(
-      (LocalDate.of(2023, 8, 1), "ACC_45616", 1),
-      (LocalDate.of(2023, 8, 2), "ACC_45616", 1)
+    lines.size shouldBe 2
+    lines.toArray shouldBe Array(
+      "2023-08-02,ACC_45616,1",
+      "2023-08-01,ACC_45616,1",
     )
-
-    result.toSet shouldBe expected.toSet
   }
 
   it should "count document opened after both QS and CS" in {
@@ -271,13 +274,11 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
+    Task2.execute(sc.parallelize(Seq(session)))
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
 
-    val expected = Seq(
-      (LocalDate.of(2023, 8, 1), "ACC_45616", 1)
-    )
-
-    result shouldBe expected
+    lines.size shouldBe 1
+    lines.toArray shouldBe Array("2023-08-01,ACC_45616,1")
   }
 
   it should "count document opened after multiple QS" in {
@@ -317,13 +318,11 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
+    Task2.execute(sc.parallelize(Seq(session)))
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
 
-    val expected = Seq(
-      (LocalDate.of(2023, 8, 1), "ACC_45616", 2)
-    )
-
-    result shouldBe expected
+    lines.size shouldBe 1
+    lines.toArray shouldBe Array("2023-08-01,ACC_45616,2")
   }
 
   it should "count document opened after multiple CS" in {
@@ -363,10 +362,9 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       docOpens = Seq.empty
     )
 
-    val result = Task2.execute(sc.parallelize(Seq(session)))
+    Task2.execute(sc.parallelize(Seq(session)))
+    val lines = Files.readAllLines(Paths.get("src/main/resources/results/task2_result.csv"))
 
-    val expected = Seq.empty
-
-    result shouldBe expected
+    lines.toArray shouldBe Array.empty
   }
 }

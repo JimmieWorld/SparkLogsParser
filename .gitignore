@@ -3,7 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-src/main/scala/org/james_world/LogParser.scala
+src/main/scala/org/testTask/LogParser.scala
 src/main/trash/
 
 ### IntelliJ IDEA ###
