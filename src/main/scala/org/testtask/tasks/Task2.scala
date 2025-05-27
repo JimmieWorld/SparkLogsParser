@@ -1,21 +1,19 @@
-package org.testTask.tasks
+package org.testtask.tasks
 
 import org.apache.spark.rdd.RDD
-import org.testTask.Utils
-import org.testTask.parser.Session
+import org.testtask.Utils
+import org.testtask.parser.Session
 
 object Task2 {
   def execute(sessions: RDD[Session]): Unit = {
     val result = sessions
       .flatMap { session =>
         session.quickSearches.flatMap { quickSearch =>
-          quickSearch.docOpens
-            .map { docOpen =>
-              (docOpen.timestamp.get.toLocalDate, docOpen.documentId)
-            }
+          quickSearch.searchResult.docOpens.map { docOpen =>
+            ((docOpen.timestamp.get.toLocalDate, docOpen.documentId), 1)
+          }
         }
       }
-      .map(dateDoc => (dateDoc, 1))
       .reduceByKey(_ + _)
       .map { case ((date, docId), count) => (date, docId, count) }
       .collect()

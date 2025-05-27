@@ -1,6 +1,6 @@
-package org.testTask.parser.events.utils
+package org.testtask.parser.events.utils
 
-import org.testTask.parser.processors.ErrorStatsAccumulator
+import org.testtask.parser.processors.ErrorStatsAccumulator
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale

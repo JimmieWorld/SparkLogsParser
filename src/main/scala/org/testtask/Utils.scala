@@ -1,4 +1,4 @@
-package org.testTask
+package org.testtask
 
 import java.io.{BufferedWriter, File, FileWriter}
 
@@ -16,15 +16,15 @@ object Utils {
   def saveToCSV[A](
       data: Array[A],
       outputPath: String,
-      header: Option[Array[String]] = None,
+      header: Array[String] = Array.empty,
       delimiter: String = ","
   )(decompose: A => Array[Any]): Unit = {
     val file = new File(outputPath)
     val writer = new BufferedWriter(new FileWriter(file))
 
     try {
-      header.foreach { cols =>
-        writer.write(cols.mkString(delimiter))
+      if (header.nonEmpty) {
+        writer.write(header.mkString(delimiter))
         writer.newLine()
       }
 

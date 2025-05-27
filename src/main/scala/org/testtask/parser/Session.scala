@@ -1,8 +1,8 @@
-package org.testTask.parser
+package org.testtask.parser
 
-import org.testTask.parser.events.utils.{DateTimeParser, DocOpenLinker}
-import org.testTask.parser.events.{CardSearch, DocumentOpen, Event, EventParser, QuickSearch}
-import org.testTask.parser.processors.{ParsingContext, SessionBuilder}
+import org.testtask.parser.events.utils.DateTimeParser
+import org.testtask.parser.events.{CardSearch, DocumentOpen, Event, EventParser, QuickSearch}
+import org.testtask.parser.processors.{ParsingContext, SessionBuilder}
 
 import java.time.LocalDateTime
 
@@ -20,11 +20,7 @@ object Session {
     val lines = context.lines
     val errorStatsAcc = context.errorStatsAcc
     val fileName = context.fileName
-
-    var sessionStart: Option[LocalDateTime] = None
-    var sessionEnd: Option[LocalDateTime] = None
-
-    val builder = SessionBuilder(context)
+    val builder = context.sessionBuilder
 
     try {
       while (lines.hasNext) {
@@ -32,24 +28,26 @@ object Session {
         val splitLine = line.split("\\s+")
 
         if (line.startsWith("SESSION_START")) {
-          sessionStart = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
+          builder.sessionStart = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
           lines.next()
         } else if (line.startsWith("SESSION_END")) {
-          sessionEnd = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
+          builder.sessionEnd = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
           lines.next()
         } else {
-          getParserForLine(line).foreach { parser =>
-            val event = parser.parse(context)
-            builder.addEvent(event)
-          }
+          getParserForLine(line).foreach(_.parse(context))
         }
       }
     } catch {
       case e: Exception =>
-        errorStatsAcc.add((s"${e.getClass.getName}", s"Error in $fileName: ${e.getMessage}"))
+        errorStatsAcc.add(
+          (
+            s"${e.getClass.getName}, ${e.getMessage}, ${e.getStackTrace.head}",
+            s"Error in $fileName in line ${lines.head}"
+          )
+        )
     }
 
-    builder.build(fileName, sessionStart, sessionEnd)
+    builder.build()
   }
 
   private def getParserForLine(line: String): Option[EventParser] = {

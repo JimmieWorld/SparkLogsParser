@@ -4,8 +4,8 @@ import org.mockito.Mockito.mock
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.testTask.parser.Session
-import org.testTask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
+import org.testtask.parser.Session
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 
 import java.time.LocalDateTime
 

@@ -1,6 +1,8 @@
-import org.testTask.parser.processors.ErrorStatsAccumulator
+package testParser.testProcessors
+
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.testtask.parser.processors.ErrorStatsAccumulator
 
 class TestErrorStatsAccumulator extends AnyFlatSpec with Matchers {
 

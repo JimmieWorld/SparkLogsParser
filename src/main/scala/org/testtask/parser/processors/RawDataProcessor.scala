@@ -1,8 +1,8 @@
-package org.testTask.parser.processors
+package org.testtask.parser.processors
 
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.testTask.parser.Session
+import org.testtask.parser.Session
 
 import scala.io.Source
 import java.io.File

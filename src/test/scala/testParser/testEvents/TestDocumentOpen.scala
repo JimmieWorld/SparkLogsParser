@@ -1,7 +1,7 @@
 package testParser.testEvents
 
-import org.testTask.parser.events.DocumentOpen
-import org.testTask.parser.processors.{ErrorStatsAccumulator, ParsingContext, SessionBuilder}
+import org.testtask.parser.events.DocumentOpen
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext, SessionBuilder}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec

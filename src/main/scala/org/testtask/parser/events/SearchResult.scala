@@ -1,11 +1,17 @@
-package org.testTask.parser.events.utils
+package org.testtask.parser.events
 
-import org.testTask.parser.processors.ParsingContext
+import org.testtask.parser.processors.ParsingContext
 
-object SearchResultParser {
-  def parserSearchResult(
+case class SearchResult(
+    searchId: String,
+    relatedDocuments: Seq[String],
+    var docOpens: Seq[DocumentOpen] = Seq.empty
+)
+
+object SearchResult {
+  def parse(
       context: ParsingContext
-  ): (String, Seq[String]) = {
+  ): SearchResult = {
     val lines = context.lines
     val errorStatsAcc = context.errorStatsAcc
     val fileName = context.fileName
@@ -19,7 +25,7 @@ object SearchResultParser {
           s"[file $fileName] Expected search result line, got unexpected event start: $line"
         )
       )
-      return ("", Seq.empty)
+      return SearchResult("", Seq.empty)
     }
 
     val fullLine = lines.next()
@@ -29,12 +35,13 @@ object SearchResultParser {
       errorStatsAcc.add(
         ("Warning: SearchDocumentsMissing", s"[file $fileName] No documents found in search line: $line")
       )
-      return (fullLine.trim, Seq.empty)
+
+      return SearchResult(fullLine.trim, Seq.empty)
     }
 
     val searchId = splitFullLine.head
     val relatedDocuments = splitFullLine.tail
 
-    (searchId, relatedDocuments)
+    SearchResult(searchId, relatedDocuments)
   }
 }

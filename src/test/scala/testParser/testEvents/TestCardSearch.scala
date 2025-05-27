@@ -1,7 +1,7 @@
 package testParser.testEvents
 
-import org.testTask.parser.events.CardSearch
-import org.testTask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
+import org.testtask.parser.events.CardSearch
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.mockito.Mockito._

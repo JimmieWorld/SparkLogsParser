@@ -1,22 +1,20 @@
-package org.testTask.parser.events
+package org.testtask.parser.events
 
-import org.testTask.parser.events.utils.{DateTimeParser, SearchResultParser}
-import org.testTask.parser.processors.ParsingContext
+import org.testtask.parser.events.utils.{DateTimeParser, SearchResultParser}
+import org.testtask.parser.processors.ParsingContext
 
 import java.time.LocalDateTime
 
 case class CardSearch(
     timestamp: Option[LocalDateTime],
-    searchId: String,
     queriesTexts: Seq[String],
-    relatedDocuments: Seq[String],
-    docOpens: Seq[DocumentOpen] = Seq.empty
+    searchResult: SearchResult
 ) extends Event
 
 object CardSearch extends EventParser {
   override def parse(
       context: ParsingContext
-  ): Event = {
+  ): Unit = {
     val lines = context.lines
     val errorStatsAcc = context.errorStatsAcc
     val fileName = context.fileName
@@ -41,7 +39,9 @@ object CardSearch extends EventParser {
         if (line.startsWith("$")) {
           Some(line.stripPrefix("$"))
         } else {
-          errorStatsAcc.add(("Warning: CardSearchMissingDollarPrefix", s"[file $fileName] Unexpected line in card search: $line"))
+          errorStatsAcc.add(
+            ("Warning: CardSearchMissingDollarPrefix", s"[file $fileName] Unexpected line in card search: $line")
+          )
           None
         }
       )
@@ -49,28 +49,8 @@ object CardSearch extends EventParser {
 
     lines.next() // пропускаем CARD_SEARCH_END
 
-    if (!lines.hasNext || lines.head.trim.charAt(0).isUpper) {
-      errorStatsAcc.add(
-        (
-          "Warning: CardSearchMissingSearchResult",
-          s"[file $fileName] Expected search result line after CARD_SEARCH_END"
-        )
-      )
-      return CardSearch(
-        timestamp = timestamp,
-        searchId = "",
-        queriesTexts = queriesTexts,
-        relatedDocuments = Seq.empty
-      )
-    }
+    val searchResult = SearchResult.parse(context)
 
-    val (searchId, relatedDocuments) = SearchResultParser.parserSearchResult(context)
-
-    CardSearch(
-      timestamp = timestamp,
-      searchId = searchId,
-      queriesTexts = queriesTexts,
-      relatedDocuments = relatedDocuments
-    )
+    context.sessionBuilder.cardSearches :+= CardSearch(timestamp, queriesTexts, searchResult)
   }
 }

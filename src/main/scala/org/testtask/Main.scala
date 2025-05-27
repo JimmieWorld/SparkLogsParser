@@ -1,9 +1,9 @@
-package org.testTask
+package org.testtask
 
 import org.apache.spark.{SparkConf, SparkContext}
-import org.testTask.tasks._
-import org.testTask.parser.processors.ErrorStatsAccumulator.ErrorStats
-import org.testTask.parser.processors.{ErrorStatsAccumulator, RawDataProcessor}
+import org.testtask.tasks._
+import org.testtask.parser.processors.ErrorStatsAccumulator.ErrorStats
+import org.testtask.parser.processors.{ErrorStatsAccumulator, RawDataProcessor}
 
 
 object Main {
@@ -39,14 +39,14 @@ object Main {
       outputPath: String
   ): Unit = {
 
-    val errorArray = errorStats.map { case (errorType, (count, samples)) =>
+    val errors = errorStats.map { case (errorType, (count, samples)) =>
       (errorType, count.toString, samples.mkString(" -|- "))
     }.toArray
 
     Utils.saveToCSV(
-      data = errorArray,
-      outputPath = outputPath,
-      header = Some(Array("ErrorType", "Count", "Samples"))
+      errors,
+      outputPath,
+      Array("ErrorType", "Count", "Samples")
     )(_.productIterator.map(_.toString).toArray)
   }
 

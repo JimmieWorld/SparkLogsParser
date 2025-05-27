@@ -1,9 +1,9 @@
 import org.apache.spark.{SparkConf, SparkContext}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.testTask.Utils
-import org.testTask.parser.processors.{ErrorStatsAccumulator, RawDataProcessor}
-import org.testTask.tasks.{Task1, Task2}
+import org.testtask.Utils
+import org.testtask.parser.processors.{ErrorStatsAccumulator, RawDataProcessor}
+import org.testtask.tasks.{Task1, Task2}
 
 class TestIntegration extends AnyFlatSpec with Matchers {
   "Full pipeline" should "correctly parse and process a real log file" in {
@@ -35,7 +35,7 @@ class TestIntegration extends AnyFlatSpec with Matchers {
       Utils.saveToCSV(
         data = errorArray,
         outputPath = "src\\main\\resources\\results\\test_errors.csv",
-        header = Some(Array("ErrorType", "Count", "Samples"))
+        header = Array("ErrorType", "Count", "Samples")
       )(_.productIterator.map(_.toString).toArray)
 
       errors.get("UnmatchedDocOpen") match {

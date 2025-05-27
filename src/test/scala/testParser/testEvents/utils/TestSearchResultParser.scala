@@ -1,7 +1,7 @@
 package testParser.testEvents.utils
 
-import org.testTask.parser.events.utils.SearchResultParser
-import org.testTask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
+import org.testtask.parser.events.utils.SearchResultParser
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 import org.mockito.Mockito._
 import org.mockito.MockitoSugar.verifyZeroInteractions
 import org.scalatest.BeforeAndAfterEach

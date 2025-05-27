@@ -1,7 +1,7 @@
-package org.testTask.parser.processors
+package org.testtask.parser.processors
 
 import org.apache.spark.util.AccumulatorV2
-import org.testTask.parser.processors.ErrorStatsAccumulator.ErrorStats
+import org.testtask.parser.processors.ErrorStatsAccumulator.ErrorStats
 
 import scala.collection.mutable
 

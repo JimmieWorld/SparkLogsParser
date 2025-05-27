@@ -1,7 +1,7 @@
 package testParser.testEvents
 
-import org.testTask.parser.events.QuickSearch
-import org.testTask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
+import org.testtask.parser.events.QuickSearch
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 import org.mockito.Mockito._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers

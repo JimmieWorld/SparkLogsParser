@@ -1,8 +1,8 @@
 package testTasks
 
-import org.testTask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
-import org.testTask.parser.Session
-import org.testTask.tasks.Task2
+import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
+import org.testtask.parser.Session
+import org.testtask.tasks.Task2
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

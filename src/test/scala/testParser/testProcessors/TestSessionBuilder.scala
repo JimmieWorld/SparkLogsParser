@@ -4,8 +4,8 @@ import org.mockito.Mockito.mock
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
-import org.testTask.parser.processors._
-import org.testTask.parser.events._
+import org.testtask.parser.processors._
+import org.testtask.parser.events._
 
 import java.time.LocalDateTime
 import scala.collection.mutable

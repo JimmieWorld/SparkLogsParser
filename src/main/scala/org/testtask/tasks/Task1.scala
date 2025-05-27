@@ -1,7 +1,7 @@
-package org.testTask.tasks
+package org.testtask.tasks
 
 import org.apache.spark.rdd.RDD
-import org.testTask.parser.Session
+import org.testtask.parser.Session
 
 object Task1 {
 
@@ -9,11 +9,8 @@ object Task1 {
 
   def execute(sessions: RDD[Session]): Unit = {
     val searchCount = sessions
-      .flatMap { session =>
-          session.cardSearches.filter(_.queriesTexts.exists(_.contains(documentId)))
-      }
-      .count()
-      .toInt
+      .map(_.cardSearches.count(_.queriesTexts.exists(_.contains(documentId))))
+      .fold(0)(_+_)
 
     println(s"Task1 document: $documentId was found $searchCount times")
   }
