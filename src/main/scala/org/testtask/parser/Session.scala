@@ -12,7 +12,7 @@ case class Session(
     sessionEnd: Option[LocalDateTime],
     cardSearches: Seq[CardSearch],
     quickSearches: Seq[QuickSearch],
-    docOpens: Seq[DocumentOpen]
+    allDocOpens: Seq[DocumentOpen]
 )
 
 object Session {

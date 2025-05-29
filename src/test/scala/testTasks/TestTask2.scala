@@ -40,7 +40,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq(
+      allDocOpens = Seq(
         DocumentOpen(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
           searchId = "s2",
@@ -78,7 +78,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session)))
@@ -115,7 +115,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           docOpens = Seq.empty
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session)))
@@ -145,7 +145,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -168,7 +168,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session1, session2)))
@@ -200,7 +200,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -223,7 +223,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session1, session2)))
@@ -271,7 +271,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session)))
@@ -315,7 +315,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
           )
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session)))
@@ -359,7 +359,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task2.execute(sc.parallelize(Seq(session)))

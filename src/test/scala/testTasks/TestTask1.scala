@@ -63,7 +63,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -80,7 +80,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session1, session2)))
@@ -104,7 +104,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq(
+      allDocOpens = Seq(
         DocumentOpen(
           timestamp = Some(sessionStart.get.plusMinutes(3)),
           searchId = "qs1",
@@ -142,7 +142,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
           docOpens = Seq.empty
         )
       ),
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session)))
@@ -166,7 +166,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -190,7 +190,7 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
         )
       ),
       quickSearches = Seq.empty,
-      docOpens = Seq.empty
+      allDocOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session1, session2)))

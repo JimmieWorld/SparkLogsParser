@@ -1,7 +1,7 @@
 package org.testtask.parser.processors
 
 import org.testtask.parser.Session
-import org.testtask.parser.events.{CardSearch, DocumentOpen, Event, QuickSearch}
+import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
 
 import java.time.LocalDateTime
 
@@ -14,21 +14,20 @@ case class SessionBuilder(
     var docOpens: Seq[DocumentOpen] = Seq.empty
 ) {
   def build(): Session = {
-    val enrichedDocOpens = enrichDocOpensWithTimestamp()
-
-    val (updatedCardSearches, updatedQuickSearches, unmatchedDocOpens) = distributeDocOpens(enrichedDocOpens)
+    enrichDocOpensWithTimestamp()
+    distributeDocOpens()
 
     Session(
       sessionId = fileName,
       sessionStart = sessionStart,
       sessionEnd = sessionEnd,
-      cardSearches = updatedCardSearches,
-      quickSearches = updatedQuickSearches,
-      docOpens = unmatchedDocOpens
+      cardSearches = cardSearches,
+      quickSearches = quickSearches,
+      allDocOpens = docOpens
     )
   }
 
-  private def enrichDocOpensWithTimestamp(): Seq[DocumentOpen] = {
+  private def enrichDocOpensWithTimestamp(): Unit = {
     val searchIdToTimestamp = (cardSearches.map(cs => cs.searchResult.searchId -> cs.timestamp) ++
       quickSearches.map(qs => qs.searchResult.searchId -> qs.timestamp))
       .collect { case (id, Some(ts)) => id -> ts}
@@ -39,14 +38,11 @@ case class SessionBuilder(
         doo.timestamp = Some(searchIdToTimestamp(doo.searchId))
       }
     }
-    docOpens
   }
 
-  private def distributeDocOpens(
-      enrichedDocOpens: Seq[DocumentOpen]
-  ): (Seq[CardSearch], Seq[QuickSearch], Seq[DocumentOpen]) = {
+  private def distributeDocOpens(): Unit = {
 
-    val docOpensGroupedBySearchId = enrichedDocOpens.groupBy(_.searchId)
+    val docOpensGroupedBySearchId = docOpens.groupBy(_.searchId)
 
     cardSearches.foreach { cs =>
       val matched = docOpensGroupedBySearchId.getOrElse(cs.searchResult.searchId, Nil)
@@ -57,9 +53,5 @@ case class SessionBuilder(
       val matched = docOpensGroupedBySearchId.getOrElse(qs.searchResult.searchId, Nil)
       qs.searchResult.docOpens ++= matched
     }
-
-    val unmatched = enrichedDocOpens.filterNot(doo => docOpensGroupedBySearchId.contains(doo.searchId))
-
-    (cardSearches, quickSearches, unmatched)
   }
 }

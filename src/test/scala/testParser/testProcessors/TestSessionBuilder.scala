@@ -48,7 +48,7 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     val session = builder.build("session1", None, None)
 
     session.quickSearches.head.docOpens shouldBe Seq(doo)
-    session.docOpens shouldBe empty
+    session.allDocOpens shouldBe empty
   }
 
   it should "attach DocumentOpen to CardSearch by searchId" in {
@@ -75,7 +75,7 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     val session = builder.build("session1", None, None)
 
     session.cardSearches.head.docOpens shouldBe Seq(doo)
-    session.docOpens shouldBe empty
+    session.allDocOpens shouldBe empty
   }
 
   it should "leave unmatched DocumentOpen in Session.docOpens" in {
@@ -92,7 +92,7 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
 
     val session = builder.build("session1", None, None)
 
-    session.docOpens shouldBe Seq(doo)
+    session.allDocOpens shouldBe Seq(doo)
   }
 
   it should "handle mixed events and leave only unmatched docOpens" in {
@@ -143,7 +143,7 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
 
     session.quickSearches.head.docOpens shouldBe Seq(doo1)
     session.cardSearches.head.docOpens shouldBe Seq(doo2)
-    session.docOpens shouldBe Seq(doo3)
+    session.allDocOpens shouldBe Seq(doo3)
   }
 
   it should "handle multiple CardSearch and QuickSearch with doc opens" in {
@@ -204,6 +204,6 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     session.cardSearches.find(_.searchId == "1CS1").get.docOpens shouldBe Seq(doo1)
     session.cardSearches.find(_.searchId == "1CS2").get.docOpens shouldBe Seq(doo2)
     session.quickSearches.find(_.searchId == "1QS1").get.docOpens shouldBe Seq(doo3)
-    session.docOpens shouldBe empty
+    session.allDocOpens shouldBe empty
   }
 }

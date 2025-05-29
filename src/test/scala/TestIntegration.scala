@@ -33,7 +33,7 @@ class TestIntegration extends AnyFlatSpec with Matchers {
       }.toArray
 
       Utils.saveToCSV(
-        data = errorArray,
+        items = errorArray,
         outputPath = "src\\main\\resources\\results\\test_errors.csv",
         header = Array("ErrorType", "Count", "Samples")
       )(_.productIterator.map(_.toString).toArray)
