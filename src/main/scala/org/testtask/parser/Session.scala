@@ -1,8 +1,8 @@
 package org.testtask.parser
 
 import org.testtask.parser.events.utils.DateTimeParser
-import org.testtask.parser.events.{CardSearch, DocumentOpen, Event, EventParser, QuickSearch}
-import org.testtask.parser.processors.{ParsingContext, SessionBuilder}
+import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
+import org.testtask.parser.processors.ParsingContext
 
 import java.time.LocalDateTime
 
@@ -12,20 +12,20 @@ case class Session(
     sessionEnd: Option[LocalDateTime],
     cardSearches: Seq[CardSearch],
     quickSearches: Seq[QuickSearch],
-    allDocOpens: Seq[DocumentOpen]
+    docOpens: Seq[DocumentOpen]
 )
 
 object Session {
 
-  private val allParsers = Seq(
-    CardSearch,
-    QuickSearch,
-    DocumentOpen
-  )
-
-  private val parsers = allParsers.flatMap { parser =>
-    parser.keys().map(key => key -> parser)
-  }.toMap
+  private val key2parsers = {
+    Seq(
+      CardSearch,
+      QuickSearch,
+      DocumentOpen
+    ).flatMap { parser =>
+      parser.keys().map(key => key -> parser)
+    }.toMap
+  }
 
   def extract(context: ParsingContext): Session = {
     while (context.lines.hasNext) {
@@ -40,7 +40,7 @@ object Session {
           context.sessionBuilder.sessionEnd = DateTimeParser.parseDateTime(splitLine.last, context)
           context.lines.next()
         } else {
-          parsers.find { case (key, _) => line.startsWith(key) }.map(_._2).get.parse(context)
+          key2parsers.find { case (key, _) => line.startsWith(key) }.map(_._2).get.parse(context)
         }
       } catch {
         case e: Exception =>

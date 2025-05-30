@@ -42,7 +42,7 @@ class TestIntegration extends AnyFlatSpec with Matchers {
         case None => ()
       }
 
-      errors.get("Warning: InvalidTimestampFormat") match {
+      errors.get("Warning: InvalidDateTimeFormat") match {
         case Some((count, _)) =>
           count shouldBe 159
         case None => ()

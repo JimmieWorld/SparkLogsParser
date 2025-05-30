@@ -37,7 +37,7 @@ class TestCardSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
     val context = extract(lines)
     val cardSearch = context.sessionBuilder.cardSearches.head
 
-    cardSearch.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 59, 25))
+    cardSearch.dateTime shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 59, 25))
     cardSearch.queriesTexts should contain theSameElementsAs Seq("134 основные средства федеральный стандарт")
     cardSearch.searchResult.searchId shouldEqual "11104369"
     cardSearch.searchResult.relatedDocuments should contain allOf ("PKBO_31048", "LAW_283870")

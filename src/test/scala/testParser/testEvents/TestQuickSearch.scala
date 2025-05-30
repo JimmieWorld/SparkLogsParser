@@ -26,7 +26,7 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     context
   }
 
-  "QuickSearch.parse" should "parse a valid QS line with timestamp and result line" in {
+  "QuickSearch.parse" should "parse a valid QS line with dateTime and result line" in {
     val lines = List(
       "QS Thu,_13_Feb_2020_21:38:09_+0300 {отказ в назначении экспертизы}",
       "-1723438653 RAPS001_95993 SUR_196608 SUR_192860"
@@ -35,7 +35,7 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val context = extract(lines)
     val qs = context.sessionBuilder.quickSearches.head
 
-    qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+    qs.dateTime shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
     qs.searchResult.searchId shouldBe "-1723438653"
     qs.queryText shouldBe "отказ в назначении экспертизы"
     qs.searchResult.relatedDocuments should contain allOf ("RAPS001_95993", "SUR_196608")
@@ -52,7 +52,7 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val context = extract(lines)
     val qs = context.sessionBuilder.quickSearches.head
 
-    qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+    qs.dateTime shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
     qs.queryText shouldBe "пенсия работающим пенсионерам"
     qs.searchResult.searchId shouldBe "-981704369"
     qs.searchResult.relatedDocuments should contain allOf ("PSR_70597", "PKBO_22363")
@@ -69,7 +69,7 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     val context = extract(lines)
     val qs = context.sessionBuilder.quickSearches.head
 
-    qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
+    qs.dateTime shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
     qs.queryText shouldBe "разные пробелы"
 
     verifyZeroInteractions(errorStatsAcc)

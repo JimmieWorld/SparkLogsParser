@@ -48,18 +48,18 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
+          dateTime = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
           queriesTexts = Seq("0 ACC_45617"),
           searchResult = SearchResult("cs1", Seq("ACC_45617"))
         ),
         CardSearch(
-          timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+          dateTime = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
           queriesTexts = Seq("0 ACC_45616"),
           searchResult = SearchResult("cs2", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq.empty,
-      allDocOpens = Seq.empty
+      docOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -68,13 +68,13 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(LocalDateTime.of(2023, 8, 2, 10, 0)),
+          dateTime = Some(LocalDateTime.of(2023, 8, 2, 10, 0)),
           queriesTexts = Seq("0 DOC_789"),
           searchResult = SearchResult("cs3", Seq("DOC_789"))
         )
       ),
       quickSearches = Seq.empty,
-      allDocOpens = Seq.empty
+      docOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session1, session2)))
@@ -90,15 +90,15 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(2)),
+          dateTime = Some(sessionStart.get.plusMinutes(2)),
           queriesTexts = Seq("0 DOC_123", "0 DOC_456"),
           searchResult = SearchResult("cs1", Seq("DOC_123"))
         )
       ),
       quickSearches = Seq.empty,
-      allDocOpens = Seq(
+      docOpens = Seq(
         DocumentOpen(
-          timestamp = Some(sessionStart.get.plusMinutes(3)),
+          dateTime = Some(sessionStart.get.plusMinutes(3)),
           searchId = "qs1",
           documentId = "ACC_45616"
         )
@@ -118,19 +118,19 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(2)),
+          dateTime = Some(sessionStart.get.plusMinutes(2)),
           queriesTexts = Seq("0 NOT_ACC_45616"),
           searchResult = SearchResult("cs1", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq(
         QuickSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(3)),
+          dateTime = Some(sessionStart.get.plusMinutes(3)),
           queryText = "ACC_45616",
           searchResult = SearchResult("qs1", Seq("ACC_45616"))
         )
       ),
-      allDocOpens = Seq.empty
+      docOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session)))
@@ -146,13 +146,13 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(2)),
+          dateTime = Some(sessionStart.get.plusMinutes(2)),
           queriesTexts = Seq("0 ACC_45616"),
           searchResult = SearchResult("cs1", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq.empty,
-      allDocOpens = Seq.empty
+      docOpens = Seq.empty
     )
 
     val session2 = Session(
@@ -161,18 +161,18 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       sessionEnd = sessionEnd,
       cardSearches = Seq(
         CardSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(3)),
+          dateTime = Some(sessionStart.get.plusMinutes(3)),
           queriesTexts = Seq("0 ACC_45616"),
           searchResult = SearchResult("cs2", Seq("ACC_45616"))
         ),
         CardSearch(
-          timestamp = Some(sessionStart.get.plusMinutes(3)),
+          dateTime = Some(sessionStart.get.plusMinutes(3)),
           queriesTexts = Seq("0 ACC_45616", "0 DOC_123"),
           searchResult = SearchResult("cs3", Seq("DOC_123"))
         )
       ),
       quickSearches = Seq.empty,
-      allDocOpens = Seq.empty
+      docOpens = Seq.empty
     )
 
     Task1.execute(sc.parallelize(Seq(session1, session2)))

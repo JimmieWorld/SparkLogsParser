@@ -6,7 +6,7 @@ import org.testtask.parser.processors.{ParsingContext, SessionBuilder}
 import java.time.LocalDateTime
 
 case class DocumentOpen(
-    var timestamp: Option[LocalDateTime],
+    var dateTime: Option[LocalDateTime],
     searchId: String,
     documentId: String
 ) extends Event
@@ -23,9 +23,9 @@ object DocumentOpen extends EventParser {
 
     val searchId = splitLineWithDoc(splitLineWithDoc.length - 2)
     val documentId = splitLineWithDoc.last
-    
-    val timestamp = DateTimeParser.parseDateTime(splitLineWithDoc(1), context)
 
-    context.sessionBuilder.docOpens :+= DocumentOpen(timestamp, searchId, documentId)
+    val dateTime = DateTimeParser.parseDateTime(splitLineWithDoc(1), context)
+
+    context.sessionBuilder.docOpens :+= DocumentOpen(dateTime, searchId, documentId)
   }
 }

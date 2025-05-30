@@ -14,7 +14,7 @@ case class SessionBuilder(
     var docOpens: Seq[DocumentOpen] = Seq.empty
 ) {
   def build(): Session = {
-    enrichDocOpensWithTimestamp()
+    enrichDocOpensWithDateTime()
     distributeDocOpens()
 
     Session(
@@ -23,19 +23,20 @@ case class SessionBuilder(
       sessionEnd = sessionEnd,
       cardSearches = cardSearches,
       quickSearches = quickSearches,
-      allDocOpens = docOpens
+      docOpens = docOpens
     )
   }
 
-  private def enrichDocOpensWithTimestamp(): Unit = {
-    val searchIdToTimestamp = (cardSearches.map(cs => cs.searchResult.searchId -> cs.timestamp) ++
-      quickSearches.map(qs => qs.searchResult.searchId -> qs.timestamp)).collect { case (id, Some(ts)) =>
-      id -> ts
-    }.toMap
+  private def enrichDocOpensWithDateTime(): Unit = {
+    val searchId2DateTime = (
+      cardSearches.map(cs => cs.searchResult.searchId -> cs.dateTime) ++
+        quickSearches.map(qs => qs.searchResult.searchId -> qs.dateTime)
+    ).collect { case (id, Some(ts)) => id -> ts }
+    .toMap
 
-    docOpens.foreach { doo =>
-      if (doo.timestamp.isEmpty && searchIdToTimestamp.contains(doo.searchId)) {
-        doo.timestamp = Some(searchIdToTimestamp(doo.searchId))
+    docOpens.foreach { docOpen =>
+      if (docOpen.dateTime.isEmpty && searchId2DateTime.contains(docOpen.searchId)) {
+        docOpen.dateTime = Some(searchId2DateTime(docOpen.searchId))
       }
     }
   }
@@ -46,12 +47,12 @@ case class SessionBuilder(
 
     cardSearches.foreach { cs =>
       val matched = docOpensGroupedBySearchId.getOrElse(cs.searchResult.searchId, Nil)
-      cs.searchResult.docOpens ++= matched
+      cs.searchResult.docOpens = matched
     }
 
     quickSearches.foreach { qs =>
       val matched = docOpensGroupedBySearchId.getOrElse(qs.searchResult.searchId, Nil)
-      qs.searchResult.docOpens ++= matched
+      qs.searchResult.docOpens = matched
     }
   }
 }

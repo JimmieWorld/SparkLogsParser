@@ -12,7 +12,7 @@ object SearchResult {
   def parse(
       context: ParsingContext
   ): SearchResult = {
-    val line = context.lines.head
+    var line = context.lines.head
 
     if (line.trim.charAt(0).isUpper) {
       context.errorStats.add(
@@ -21,22 +21,16 @@ object SearchResult {
           s"[file ${context.fileName}] Expected search result line, got unexpected event start: $line"
         )
       )
-      return SearchResult("", Seq.empty)
+      return SearchResult(null, null)
     }
 
-    val fullLine = context.lines.next()
-    val splitFullLine = fullLine.trim.split("\\s+")
+    line = context.lines.next()
+    val splitLine = line.trim.split("\\s+")
 
-    if (splitFullLine.length < 2) {
-      context.errorStats.add(
-        ("Warning: SearchDocumentsMissing", s"[file ${context.fileName}] No documents found in search line: $line")
-      )
+    if (splitLine.length < 2) return SearchResult(line.trim, Seq.empty)
 
-      return SearchResult(fullLine.trim, Seq.empty)
-    }
-
-    val searchId = splitFullLine.head
-    val relatedDocuments = splitFullLine.tail
+    val searchId = splitLine.head
+    val relatedDocuments = splitLine.tail
 
     SearchResult(searchId, relatedDocuments)
   }

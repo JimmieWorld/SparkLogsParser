@@ -26,7 +26,7 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
     context
   }
 
-  "DocumentOpen.parse" should "correctly parse DOC_OPEN line with valid timestamp" in {
+  "DocumentOpen.parse" should "correctly parse DOC_OPEN line with valid dataTime" in {
     val line = List(
       "DOC_OPEN 25.04.2025_10:00:00 -1234 DOC_123"
     )
@@ -36,10 +36,10 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
 
     event.searchId shouldBe "-1234"
     event.documentId shouldBe "DOC_123"
-    event.timestamp shouldBe Some(LocalDateTime.of(2025, 4, 25, 10, 0, 0))
+    event.dateTime shouldBe Some(LocalDateTime.of(2025, 4, 25, 10, 0, 0))
   }
 
-  it should "use searchTimestamps if no timestamp in line" in {
+  it should "use searchDateTime if no dataTime in line" in {
     val line = List(
       "DOC_OPEN -12345 DOC123"
     )
@@ -49,7 +49,7 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
 
     println(errorStatsAcc.value)
 
-    event.timestamp shouldBe None
+    event.dateTime shouldBe None
     errorStatsAcc.value shouldBe null
   }
 
@@ -61,7 +61,7 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
     val context = extract(line)
     val event = context.sessionBuilder.docOpens.head
 
-    event.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
+    event.dateTime shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
     event.searchId shouldBe "-1723438653"
     event.documentId shouldBe "RAPS013_286883"
 

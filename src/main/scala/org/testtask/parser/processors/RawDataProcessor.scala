@@ -18,8 +18,7 @@ object RawDataProcessor {
   ): RDD[Session] = {
     sc.register(errorStats)
 
-    val dir = new File(filesPath)
-    val files = dir.listFiles().toSeq
+    val files = new File(filesPath).listFiles().toSeq
     val sessionLogsRDD = sc.parallelize(files)
 
     sessionLogsRDD.map { file =>

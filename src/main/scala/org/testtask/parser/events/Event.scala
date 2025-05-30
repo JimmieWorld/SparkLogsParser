@@ -5,7 +5,7 @@ import org.testtask.parser.processors.ParsingContext
 import java.time.LocalDateTime
 
 trait Event {
-  def timestamp: Option[LocalDateTime]
+  def dateTime: Option[LocalDateTime]
 }
 
 trait EventParser {

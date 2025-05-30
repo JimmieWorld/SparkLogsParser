@@ -6,7 +6,7 @@ import org.testtask.parser.processors.ParsingContext
 import java.time.LocalDateTime
 
 case class CardSearch(
-    timestamp: Option[LocalDateTime],
+    dateTime: Option[LocalDateTime],
     queriesTexts: Seq[String],
     searchResult: SearchResult
 ) extends Event
@@ -22,7 +22,7 @@ object CardSearch extends EventParser {
 
     val splitFirstLine = firstLine.trim.split("\\s+")
 
-    val timestamp = DateTimeParser.parseDateTime(splitFirstLine.last, context)
+    val dateTime = DateTimeParser.parseDateTime(splitFirstLine.last, context)
 
     val queryLines = scala.collection.mutable.ListBuffer[String]()
     while (context.lines.hasNext && !context.lines.head.startsWith("CARD_SEARCH_END")) {
@@ -55,6 +55,6 @@ object CardSearch extends EventParser {
 
     val searchResult = SearchResult.parse(context)
 
-    context.sessionBuilder.cardSearches :+= CardSearch(timestamp, queriesTexts, searchResult)
+    context.sessionBuilder.cardSearches :+= CardSearch(dateTime, queriesTexts, searchResult)
   }
 }

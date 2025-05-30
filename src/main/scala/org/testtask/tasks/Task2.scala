@@ -10,7 +10,7 @@ object Task2 {
       .flatMap { session =>
         session.quickSearches.flatMap { quickSearch =>
           quickSearch.searchResult.docOpens.map { docOpen =>
-            ((docOpen.timestamp.get.toLocalDate, docOpen.documentId), 1)
+            ((docOpen.dateTime.get.toLocalDate, docOpen.documentId), 1)
           }
         }
       }

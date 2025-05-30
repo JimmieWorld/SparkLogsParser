@@ -20,7 +20,7 @@ class TestDateTimeParser extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     super.beforeEach()
   }
 
-  "extractTimestamp" should "parse default format (dd.MM.yyyy_HH:mm:ss)" in {
+  "extractDateTime" should "parse default format (dd.MM.yyyy_HH:mm:ss)" in {
     val line = "13.02.2020_21:45:55"
     val result = DateTimeParser.parseDateTime(line, context)
 
@@ -39,7 +39,7 @@ class TestDateTimeParser extends AnyFlatSpec with Matchers with BeforeAndAfterEa
   }
 
   it should "parse RFC822-like format for СS event" in {
-    val line = "Thu,_13_Feb_2020_21:38:09_+0300"
+    val line = "Thu,_13_Feb_2020_23:38:09_+0500"
     val result = DateTimeParser.parseDateTime(line, context)
 
     result shouldBe defined
@@ -54,8 +54,8 @@ class TestDateTimeParser extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     result shouldBe None
     verify(context.errorStats).add(
       (
-        "Warning: InvalidTimestampFormat",
-        "[file 4] Failed to parse timestamp from line: BAD_DATE_FORMAT"
+        "Warning: InvalidDateTimeFormat",
+        "[file 4] Failed to parse dateTime from line: BAD_DATE_FORMAT"
       )
     )
   }

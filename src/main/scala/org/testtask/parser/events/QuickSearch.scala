@@ -6,7 +6,7 @@ import org.testtask.parser.processors.ParsingContext
 import java.time.LocalDateTime
 
 case class QuickSearch(
-    timestamp: Option[LocalDateTime],
+    dateTime: Option[LocalDateTime],
     queryText: String,
     searchResult: SearchResult
 ) extends Event
@@ -21,12 +21,12 @@ object QuickSearch extends EventParser {
     val firstLine = context.lines.next()
     val splitFirstLine = splitQuickSearchLine(firstLine)
 
-    val timestamp = DateTimeParser.parseDateTime(splitFirstLine(1), context)
+    val dateTime = DateTimeParser.parseDateTime(splitFirstLine(1), context)
     val queryText = splitFirstLine.last.stripPrefix("{").stripSuffix("}")
 
     val searchResult = SearchResult.parse(context)
 
-    context.sessionBuilder.quickSearches :+= QuickSearch(timestamp, queryText, searchResult)
+    context.sessionBuilder.quickSearches :+= QuickSearch(dateTime, queryText, searchResult)
   }
 
   private def splitQuickSearchLine(line: String): Array[String] = {
@@ -44,9 +44,9 @@ object QuickSearch extends EventParser {
       return Array(eventType, restAfterType)
     }
 
-    val timestampPart = restAfterType.substring(0, queryStartIndex).trim
+    val dateTimePart = restAfterType.substring(0, queryStartIndex).trim
     val queryPart = restAfterType.substring(queryStartIndex).trim
 
-    Array(eventType, timestampPart, queryPart)
+    Array(eventType, dateTimePart, queryPart)
   }
 }
