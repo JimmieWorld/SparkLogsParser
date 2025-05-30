@@ -29,9 +29,9 @@ case class SessionBuilder(
 
   private def enrichDocOpensWithTimestamp(): Unit = {
     val searchIdToTimestamp = (cardSearches.map(cs => cs.searchResult.searchId -> cs.timestamp) ++
-      quickSearches.map(qs => qs.searchResult.searchId -> qs.timestamp))
-      .collect { case (id, Some(ts)) => id -> ts}
-      .toMap
+      quickSearches.map(qs => qs.searchResult.searchId -> qs.timestamp)).collect { case (id, Some(ts)) =>
+      id -> ts
+    }.toMap
 
     docOpens.foreach { doo =>
       if (doo.timestamp.isEmpty && searchIdToTimestamp.contains(doo.searchId)) {

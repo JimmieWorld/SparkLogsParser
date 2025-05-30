@@ -1,7 +1,7 @@
 package testTasks
 
 import org.scalatest.BeforeAndAfterEach
-import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
+import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch, SearchResult}
 import org.testtask.parser.Session
 import org.testtask.tasks.Task1
 import org.scalatest.flatspec.AnyFlatSpec
@@ -49,17 +49,13 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "cs1",
           queriesTexts = Seq("0 ACC_45617"),
-          relatedDocuments = Seq.empty,
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs1", Seq("ACC_45617"))
         ),
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "cs2",
           queriesTexts = Seq("0 ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs2", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq.empty,
@@ -73,10 +69,8 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 2, 10, 0)),
-          searchId = "cs3",
           queriesTexts = Seq("0 DOC_789"),
-          relatedDocuments = Seq("DOC_789"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs3", Seq("DOC_789"))
         )
       ),
       quickSearches = Seq.empty,
@@ -97,10 +91,8 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(sessionStart.get.plusMinutes(2)),
-          searchId = "cs1",
           queriesTexts = Seq("0 DOC_123", "0 DOC_456"),
-          relatedDocuments = Seq("DOC_123"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs1", Seq("DOC_123"))
         )
       ),
       quickSearches = Seq.empty,
@@ -127,19 +119,15 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(sessionStart.get.plusMinutes(2)),
-          searchId = "cs1",
           queriesTexts = Seq("0 NOT_ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs1", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(sessionStart.get.plusMinutes(3)),
-          searchId = "qs1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("qs1", Seq("ACC_45616"))
         )
       ),
       allDocOpens = Seq.empty
@@ -159,10 +147,8 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(sessionStart.get.plusMinutes(2)),
-          searchId = "cs1",
           queriesTexts = Seq("0 ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs1", Seq("ACC_45616"))
         )
       ),
       quickSearches = Seq.empty,
@@ -176,17 +162,13 @@ class TestTask1 extends AnyFlatSpec with Matchers with TestSparkContext with Bef
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(sessionStart.get.plusMinutes(3)),
-          searchId = "cs2",
           queriesTexts = Seq("0 ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs2", Seq("ACC_45616"))
         ),
         CardSearch(
           timestamp = Some(sessionStart.get.plusMinutes(3)),
-          searchId = "cs3",
           queriesTexts = Seq("0 ACC_45616", "0 DOC_123"),
-          relatedDocuments = Seq("DOC_123"),
-          docOpens = Seq.empty
+          searchResult = SearchResult("cs3", Seq("DOC_123"))
         )
       ),
       quickSearches = Seq.empty,

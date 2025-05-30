@@ -1,38 +1,38 @@
 package org.testtask.parser.events.utils
 
-import org.testtask.parser.processors.ErrorStatsAccumulator
+import org.testtask.parser.processors.ParsingContext
+
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-
 import scala.util.Try
 
 object DateTimeParser {
 
-  private val defaultFormat = DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss")
-  private val secondaryFormat = DateTimeFormatter.ofPattern("EEE,_d_MMM_yyyy_HH:mm:ss", Locale.ENGLISH)
+  private val formats = Iterator(
+    DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
+    DateTimeFormatter.ofPattern("EEE,_d_MMM_yyyy_HH:mm:ss", Locale.ENGLISH)
+  )
 
-  def parseTimestamp(
+  def parseDateTime(
       line: String,
-      errorStatsAcc: ErrorStatsAccumulator,
-      fileName: String
+      context: ParsingContext
   ): Option[LocalDateTime] = {
-    val dateLine = line.trim
+    val dateLine = line
       .replaceAll("(_[+-]\\d{4})$", "")
-      .trim
 
-    if (Try(LocalDateTime.parse(dateLine, defaultFormat)).isSuccess) {
-      Some(LocalDateTime.parse(dateLine, defaultFormat))
-    } else if (Try(LocalDateTime.parse(dateLine, secondaryFormat)).isSuccess) {
-      Some(LocalDateTime.parse(dateLine, secondaryFormat))
-    } else {
-      errorStatsAcc.add(
-        (
-          "Warning: InvalidTimestampFormat",
-          s"[file $fileName] Failed to parse timestamp from line: $line"
-        )
-      )
-      None
+    for (format <- formats) {
+      Try(LocalDateTime.parse(dateLine, format)).toOption.foreach { dateTime =>
+        return Some(dateTime)
+      }
     }
+
+    context.errorStats.add(
+      (
+        "Warning: InvalidTimestampFormat",
+        s"[file ${context.fileName}] Failed to parse timestamp from line: $line"
+      )
+    )
+    None
   }
 }

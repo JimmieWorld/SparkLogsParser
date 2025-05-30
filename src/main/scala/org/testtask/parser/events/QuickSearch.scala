@@ -1,6 +1,6 @@
 package org.testtask.parser.events
 
-import org.testtask.parser.events.utils.{DateTimeParser, SearchResultParser}
+import org.testtask.parser.events.utils.DateTimeParser
 import org.testtask.parser.processors.ParsingContext
 
 import java.time.LocalDateTime
@@ -12,17 +12,16 @@ case class QuickSearch(
 ) extends Event
 
 object QuickSearch extends EventParser {
+
+  override def keys(): Array[String] = Array("QS")
+
   override def parse(
       context: ParsingContext
   ): Unit = {
-    val fileName = context.fileName
-    val bufferedIt = context.lines
-    val errorStatsAcc = context.errorStatsAcc
-
-    val firstLine = bufferedIt.next()
+    val firstLine = context.lines.next()
     val splitFirstLine = splitQuickSearchLine(firstLine)
 
-    val timestamp = DateTimeParser.parseTimestamp(splitFirstLine(1), errorStatsAcc, fileName)
+    val timestamp = DateTimeParser.parseDateTime(splitFirstLine(1), context)
     val queryText = splitFirstLine.last.stripPrefix("{").stripSuffix("}")
 
     val searchResult = SearchResult.parse(context)

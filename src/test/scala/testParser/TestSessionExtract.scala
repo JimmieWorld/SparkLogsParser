@@ -52,29 +52,29 @@ class TestSessionExtract extends AnyFlatSpec with Matchers with BeforeAndAfterEa
 
     session.cardSearches.size shouldBe 2
 
-    val cs1 = session.cardSearches.find(_.searchId == "1CS1").get
+    val cs1 = session.cardSearches.find(_.searchResult.searchId == "1CS1").get
     cs1.queriesTexts shouldBe Seq("134 запрос1")
-    cs1.relatedDocuments should contain allOf ("DOC_123", "DOC_456", "DOC_1234")
-    cs1.docOpens.map(_.documentId) should contain allOf ("DOC_123", "DOC_456", "DOC_1234")
+    cs1.searchResult.relatedDocuments should contain allOf ("DOC_123", "DOC_456", "DOC_1234")
+    cs1.searchResult.docOpens.map(_.documentId) should contain allOf ("DOC_123", "DOC_456", "DOC_1234")
 
-    val cs2 = session.cardSearches.find(_.searchId == "1CS2").get
+    val cs2 = session.cardSearches.find(_.searchResult.searchId == "1CS2").get
     cs2.queriesTexts shouldBe Seq("0 DOC_321")
-    cs2.relatedDocuments shouldBe Seq("DOC_321")
-    cs2.docOpens.map(_.documentId) shouldBe Seq("DOC_321")
+    cs2.searchResult.relatedDocuments shouldBe Seq("DOC_321")
+    cs2.searchResult.docOpens.map(_.documentId) shouldBe Seq("DOC_321")
 
     session.quickSearches.size shouldBe 2
 
-    val qs1 = session.quickSearches.find(_.searchId == "1QS1").get
+    val qs1 = session.quickSearches.find(_.searchResult.searchId == "1QS1").get
     qs1.queryText shouldBe "налогообложение"
-    qs1.relatedDocuments shouldBe Seq("DOC_567")
-    qs1.docOpens.map(_.documentId) shouldBe Seq("DOC_567")
+    qs1.searchResult.relatedDocuments shouldBe Seq("DOC_567")
+    qs1.searchResult.docOpens.map(_.documentId) shouldBe Seq("DOC_567")
 
-    val qs2 = session.quickSearches.find(_.searchId == "1QS2").get
+    val qs2 = session.quickSearches.find(_.searchResult.searchId == "1QS2").get
     qs2.queryText shouldBe "пу пу пу"
-    qs2.relatedDocuments shouldBe Seq("DOC_765")
-    qs2.docOpens.map(_.documentId) shouldBe Seq("DOC_765")
+    qs2.searchResult.relatedDocuments shouldBe Seq("DOC_765")
+    qs2.searchResult.docOpens.map(_.documentId) shouldBe Seq("DOC_765")
 
-    session.allDocOpens.size shouldBe 1
+    session.allDocOpens.size shouldBe 7
     session.allDocOpens.head.documentId shouldBe "DOC_000"
   }
 }

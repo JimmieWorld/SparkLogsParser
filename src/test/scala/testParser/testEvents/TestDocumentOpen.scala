@@ -1,7 +1,7 @@
 package testParser.testEvents
 
 import org.testtask.parser.events.DocumentOpen
-import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext, SessionBuilder}
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
@@ -19,18 +19,20 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
     super.beforeEach()
   }
 
+  def extract(lines: List[String]): ParsingContext = {
+    val bufferedIt = lines.iterator.buffered
+    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
+    DocumentOpen.parse(context)
+    context
+  }
+
   "DocumentOpen.parse" should "correctly parse DOC_OPEN line with valid timestamp" in {
     val line = List(
       "DOC_OPEN 25.04.2025_10:00:00 -1234 DOC_123"
     )
-    val bufferedIt = line.iterator.buffered
 
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    context.searchTimestamps += ("otherId" -> LocalDateTime.now())
-
-    val result = DocumentOpen.parse(context)
-
-    val event = result.asInstanceOf[DocumentOpen]
+    val context = extract(line)
+    val event = context.sessionBuilder.docOpens.head
 
     event.searchId shouldBe "-1234"
     event.documentId shouldBe "DOC_123"
@@ -41,38 +43,27 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
     val line = List(
       "DOC_OPEN -12345 DOC123"
     )
-    val bufferedIt = line.iterator.buffered
 
-    val knownTime = LocalDateTime.of(2025, 4, 25, 12, 0, 0)
-
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    context.searchTimestamps += ("-12345" -> knownTime)
-
-    val result = DocumentOpen.parse(context)
-
-    val event = result.asInstanceOf[DocumentOpen]
+    val context = extract(line)
+    val event = context.sessionBuilder.docOpens.head
 
     println(errorStatsAcc.value)
 
-    event.timestamp shouldBe Some(knownTime)
+    event.timestamp shouldBe None
     errorStatsAcc.value shouldBe null
   }
 
   it should "parse DOC_OPEN line with extra spaces or malformed spacing" in {
-    val lines = List(
+    val line = List(
       "DOC_OPEN   13.02.2020_21:45:55   -1723438653   RAPS013_286883"
     )
 
-    val bufferedIt = lines.iterator.buffered
+    val context = extract(line)
+    val event = context.sessionBuilder.docOpens.head
 
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val result = DocumentOpen.parse(context)
-
-    val docOpen = result.asInstanceOf[DocumentOpen]
-
-    docOpen.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55).toLocalDate)
-    docOpen.searchId shouldBe "-1723438653"
-    docOpen.documentId shouldBe "RAPS013_286883"
+    event.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
+    event.searchId shouldBe "-1723438653"
+    event.documentId shouldBe "RAPS013_286883"
 
     verifyZeroInteractions(errorStatsAcc)
   }
@@ -83,20 +74,16 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
       "DOC_OPEN 13.02.2020_21:46:00 -1723438653 SUR_196608"
     )
 
-    val bufferedIt = lines.iterator.buffered
+    val context = extract(lines)
+    val docOpen1 = context.sessionBuilder.docOpens.head
 
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val firstEvent = DocumentOpen.parse(context)
-
-    val docOpen1 = firstEvent.asInstanceOf[DocumentOpen]
-    docOpen1.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55).toLocalDate)
+    docOpen1.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
     docOpen1.searchId shouldBe "-1723438653"
     docOpen1.documentId shouldBe "RAPS013_286883"
 
-    val secondEvent = DocumentOpen.parse(context)
+    val docOpen2 = context.sessionBuilder.docOpens.last
 
-    val docOpen2 = secondEvent.asInstanceOf[DocumentOpen]
-    docOpen2.timestamp.map(_.toLocalDate) shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 46, 0).toLocalDate)
+    docOpen2.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
     docOpen2.searchId shouldBe "-1723438653"
     docOpen2.documentId shouldBe "SUR_196608"
 

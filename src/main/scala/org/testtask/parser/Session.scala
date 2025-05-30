@@ -16,47 +16,43 @@ case class Session(
 )
 
 object Session {
-  def extract(context: ParsingContext): Session = {
-    val lines = context.lines
-    val errorStatsAcc = context.errorStatsAcc
-    val fileName = context.fileName
-    val builder = context.sessionBuilder
 
-    try {
-      while (lines.hasNext) {
-        val line = lines.head
+  private val allParsers = Seq(
+    CardSearch,
+    QuickSearch,
+    DocumentOpen
+  )
+
+  private val parsers = allParsers.flatMap { parser =>
+    parser.keys().map(key => key -> parser)
+  }.toMap
+
+  def extract(context: ParsingContext): Session = {
+    while (context.lines.hasNext) {
+      val line = context.lines.head
+      try {
         val splitLine = line.split("\\s+")
 
         if (line.startsWith("SESSION_START")) {
-          builder.sessionStart = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
-          lines.next()
+          context.sessionBuilder.sessionStart = DateTimeParser.parseDateTime(splitLine.last, context)
+          context.lines.next()
         } else if (line.startsWith("SESSION_END")) {
-          builder.sessionEnd = DateTimeParser.parseTimestamp(splitLine.last, errorStatsAcc, fileName)
-          lines.next()
+          context.sessionBuilder.sessionEnd = DateTimeParser.parseDateTime(splitLine.last, context)
+          context.lines.next()
         } else {
-          getParserForLine(line).foreach(_.parse(context))
+          parsers.find { case (key, _) => line.startsWith(key) }.map(_._2).get.parse(context)
         }
-      }
-    } catch {
-      case e: Exception =>
-        errorStatsAcc.add(
-          (
-            s"${e.getClass.getName}, ${e.getMessage}, ${e.getStackTrace.head}",
-            s"Error in $fileName in line ${lines.head}"
+      } catch {
+        case e: Exception =>
+          context.errorStats.add(
+            (
+              s"${e.getClass.getName}, ${e.getMessage}, ${e.getStackTrace.head}",
+              s"Error in ${context.fileName} in line $line"
+            )
           )
-        )
+      }
     }
 
-    builder.build()
-  }
-
-  private def getParserForLine(line: String): Option[EventParser] = {
-    val parsers: Map[String, EventParser] = Map(
-      "CARD_SEARCH_START" -> CardSearch,
-      "QS" -> QuickSearch,
-      "DOC_OPEN" -> DocumentOpen
-    )
-
-    parsers.keys.find(line.startsWith).map(parsers)
+    context.sessionBuilder.build()
   }
 }

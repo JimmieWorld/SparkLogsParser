@@ -17,9 +17,7 @@ class TestIntegration extends AnyFlatSpec with Matchers {
       val errorStatsAcc = new ErrorStatsAccumulator()
       sc.register(errorStatsAcc)
 
-      val filesPath = "src/test/resources/data"
-
-      val sessionsRDD = RawDataProcessor.process(sc, filesPath, errorStatsAcc)
+      val sessionsRDD = RawDataProcessor.process()
 
       sessionsRDD.count() shouldBe 100
 

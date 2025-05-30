@@ -1,14 +1,15 @@
-package testParser.testEvents.utils
+package testParser.testEvents
 
-import org.testtask.parser.events.utils.SearchResultParser
-import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 import org.mockito.Mockito._
 import org.mockito.MockitoSugar.verifyZeroInteractions
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import org.testtask.parser.events.SearchResult
+import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 
-class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
+
+class TestSearchResult extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   var errorStatsAcc: ErrorStatsAccumulator = _
 
@@ -17,10 +18,10 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
     super.beforeEach()
   }
 
-  def extract(lines: Seq[String]): (String, Seq[String]) = {
+  def extract(lines: Seq[String]): SearchResult = {
     val bufferedIt = lines.iterator.buffered
     val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    SearchResultParser.parserSearchResult(context)
+    SearchResult.parse(context)
   }
 
   "extractSearchResult" should "successfully parse a valid search result line" in {
@@ -28,10 +29,10 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
       "-1723438653 RAPS001_95993 SUR_196608 SUR_192860"
     )
 
-    val (searchId, docs) = extract(lines)
+    val event = extract(lines)
 
-    searchId shouldBe "-1723438653"
-    docs should contain allOf ("RAPS001_95993", "SUR_196608", "SUR_192860")
+    event.searchId shouldBe "-1723438653"
+    event.relatedDocuments should contain allOf ("RAPS001_95993", "SUR_196608", "SUR_192860")
     verifyZeroInteractions(errorStatsAcc)
   }
 
@@ -40,10 +41,10 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
       "-1234"
     )
 
-    val (searchId, docs) = extract(lines)
+    val event = extract(lines)
 
-    searchId shouldBe "-1234"
-    docs shouldBe empty
+    event.searchId shouldBe "-1234"
+    event.relatedDocuments shouldBe empty
     verify(errorStatsAcc).add(("Warning: SearchDocumentsMissing", "No documents found in search line: -1234"))
   }
 
@@ -52,9 +53,8 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
       "DOC_OPEN 13.02.2020_21:45:55 -1723438653 RAPS013_286883"
     )
 
-    val result = extract(lines)
+    extract(lines)
 
-    result shouldBe ("", Nil)
     verify(errorStatsAcc).add(
       (
         "Warning: UnexpectedEndOfSearch",
@@ -68,10 +68,10 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
       "   -1234   DOC1   DOC2   "
     )
 
-    val (searchId, docs) = extract(lines)
+    val event = extract(lines)
 
-    searchId shouldBe "-1234"
-    docs should contain theSameElementsAs Seq("DOC1", "DOC2")
+    event.searchId shouldBe "-1234"
+    event.relatedDocuments should contain theSameElementsAs Seq("DOC1", "DOC2")
     verifyZeroInteractions(errorStatsAcc)
   }
 
@@ -80,10 +80,10 @@ class TestSearchResultParser extends AnyFlatSpec with Matchers with BeforeAndAft
       "ff12345 DOC1 DOC2 DOC3"
     )
 
-    val (searchId, docs) = extract(lines)
+    val event = extract(lines)
 
-    searchId shouldBe "ff12345"
-    docs should contain allOf ("DOC1", "DOC2", "DOC3")
+    event.searchId shouldBe "ff12345"
+    event.relatedDocuments should contain allOf ("DOC1", "DOC2", "DOC3")
     verifyZeroInteractions(errorStatsAcc)
   }
 }

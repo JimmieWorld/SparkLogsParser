@@ -1,6 +1,6 @@
 package org.testtask.parser.events
 
-import org.testtask.parser.events.utils.{DateTimeParser, SearchResultParser}
+import org.testtask.parser.events.utils.DateTimeParser
 import org.testtask.parser.processors.ParsingContext
 
 import java.time.LocalDateTime
@@ -12,26 +12,27 @@ case class CardSearch(
 ) extends Event
 
 object CardSearch extends EventParser {
+
+  override def keys(): Array[String] = Array("CARD_SEARCH_START")
+
   override def parse(
       context: ParsingContext
   ): Unit = {
-    val lines = context.lines
-    val errorStatsAcc = context.errorStatsAcc
-    val fileName = context.fileName
-
-    val firstLine = lines.next()
+    val firstLine = context.lines.next()
 
     val splitFirstLine = firstLine.trim.split("\\s+")
 
-    val timestamp = DateTimeParser.parseTimestamp(splitFirstLine.last, errorStatsAcc, fileName)
+    val timestamp = DateTimeParser.parseDateTime(splitFirstLine.last, context)
 
     val queryLines = scala.collection.mutable.ListBuffer[String]()
-    while (lines.hasNext && !lines.head.startsWith("CARD_SEARCH_END")) {
-      val nextLine = lines.head
+    while (context.lines.hasNext && !context.lines.head.startsWith("CARD_SEARCH_END")) {
+      val nextLine = context.lines.head
       if (nextLine.startsWith("DOC_OPEN") || nextLine.startsWith("SESSION_END")) {
-        errorStatsAcc.add(("CardSearchUnexpectedLine", s"[file $fileName] Expected CARD_SEARCH_END, got: $nextLine"))
+        context.errorStats.add(
+          ("CardSearchUnexpectedLine", s"[file ${context.fileName}] Expected CARD_SEARCH_END, got: $nextLine")
+        )
       }
-      queryLines += lines.next()
+      queryLines += context.lines.next()
     }
 
     val queriesTexts = queryLines
@@ -39,15 +40,18 @@ object CardSearch extends EventParser {
         if (line.startsWith("$")) {
           Some(line.stripPrefix("$"))
         } else {
-          errorStatsAcc.add(
-            ("Warning: CardSearchMissingDollarPrefix", s"[file $fileName] Unexpected line in card search: $line")
+          context.errorStats.add(
+            (
+              "Warning: CardSearchMissingDollarPrefix",
+              s"[file ${context.fileName}] Unexpected line in card search: $line"
+            )
           )
           None
         }
       )
       .toSeq
 
-    lines.next() // пропускаем CARD_SEARCH_END
+    context.lines.next() // пропускаем CARD_SEARCH_END
 
     val searchResult = SearchResult.parse(context)
 

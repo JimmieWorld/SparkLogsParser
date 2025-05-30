@@ -19,22 +19,26 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
     super.beforeEach()
   }
 
+  def extract(lines: List[String]): ParsingContext = {
+    val bufferedIt = lines.iterator.buffered
+    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
+    QuickSearch.parse(context)
+    context
+  }
+
   "QuickSearch.parse" should "parse a valid QS line with timestamp and result line" in {
-    val lines = Seq(
+    val lines = List(
       "QS Thu,_13_Feb_2020_21:38:09_+0300 {отказ в назначении экспертизы}",
       "-1723438653 RAPS001_95993 SUR_196608 SUR_192860"
     )
 
-    val bufferedIt = lines.iterator.buffered
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val event = QuickSearch.parse(context)
-
-    val qs = event.asInstanceOf[QuickSearch]
+    val context = extract(lines)
+    val qs = context.sessionBuilder.quickSearches.head
 
     qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
-    qs.searchId shouldBe "-1723438653"
+    qs.searchResult.searchId shouldBe "-1723438653"
     qs.queryText shouldBe "отказ в назначении экспертизы"
-    qs.relatedDocuments should contain allOf ("RAPS001_95993", "SUR_196608")
+    qs.searchResult.relatedDocuments should contain allOf ("RAPS001_95993", "SUR_196608")
 
     verifyZeroInteractions(errorStatsAcc)
   }
@@ -45,17 +49,13 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       "-981704369 PSR_70597 PKBO_22363"
     )
 
-    val bufferedIt = lines.iterator.buffered
-
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val event = QuickSearch.parse(context)
-
-    val qs = event.asInstanceOf[QuickSearch]
+    val context = extract(lines)
+    val qs = context.sessionBuilder.quickSearches.head
 
     qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
     qs.queryText shouldBe "пенсия работающим пенсионерам"
-    qs.searchId shouldBe "-981704369"
-    qs.relatedDocuments should contain allOf ("PSR_70597", "PKBO_22363")
+    qs.searchResult.searchId shouldBe "-981704369"
+    qs.searchResult.relatedDocuments should contain allOf ("PSR_70597", "PKBO_22363")
 
     verifyZeroInteractions(errorStatsAcc)
   }
@@ -66,12 +66,9 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       "-1234 DOC123"
     )
 
-    val bufferedIt = lines.iterator.buffered
+    val context = extract(lines)
+    val qs = context.sessionBuilder.quickSearches.head
 
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val event = QuickSearch.parse(context)
-
-    val qs = event.asInstanceOf[QuickSearch]
     qs.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 38, 9))
     qs.queryText shouldBe "разные пробелы"
 
@@ -84,16 +81,12 @@ class TestQuickSearch extends AnyFlatSpec with Matchers with BeforeAndAfterEach 
       "-1234"
     )
 
-    val bufferedIt = lines.iterator.buffered
-
-    val context = ParsingContext(bufferedIt, errorStatsAcc, "4")
-    val event = QuickSearch.parse(context)
-
-    val qs = event.asInstanceOf[QuickSearch]
+    val context = extract(lines)
+    val qs = context.sessionBuilder.quickSearches.head
 
     qs.queryText shouldBe "пустой результат"
-    qs.searchId shouldBe "-1234"
-    qs.relatedDocuments shouldBe empty
+    qs.searchResult.searchId shouldBe "-1234"
+    qs.searchResult.relatedDocuments shouldBe empty
 
     errorStatsAcc.value shouldBe null
   }

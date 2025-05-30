@@ -1,6 +1,6 @@
 package testTasks
 
-import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch}
+import org.testtask.parser.events.{CardSearch, DocumentOpen, QuickSearch, SearchResult}
 import org.testtask.parser.Session
 import org.testtask.tasks.Task2
 import org.scalatest.flatspec.AnyFlatSpec
@@ -23,19 +23,21 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "s1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616", "DOC_123"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-              searchId = "s1",
-              documentId = "ACC_45616"
-            ),
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
-              searchId = "s1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "s1",
+            Seq("ACC_45616", "DOC_123"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+                searchId = "s1",
+                documentId = "ACC_45616"
+              ),
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
+                searchId = "s1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -65,14 +67,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "cs1",
           queriesTexts = Seq("$ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-              searchId = "cs1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "cs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+                searchId = "cs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -94,14 +98,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "cs1",
           queriesTexts = Seq("$ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-              searchId = "cs1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "cs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+                searchId = "cs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -109,10 +115,8 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "qs1",
           queryText = "",
-          relatedDocuments = Seq.empty,
-          docOpens = Seq.empty
+          searchResult = SearchResult("qs1", Seq.empty)
         )
       ),
       allDocOpens = Seq.empty
@@ -133,14 +137,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "s1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-              searchId = "s1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "s1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+                searchId = "s1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -156,14 +162,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 13, 0)),
-          searchId = "s2",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 13, 5)),
-              searchId = "s2",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "s2",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 13, 5)),
+                searchId = "s2",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -188,14 +196,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "s1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-              searchId = "s1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "s1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
+                searchId = "s1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -211,14 +221,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 2, 12, 0)),
-          searchId = "s2",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 2, 12, 5)),
-              searchId = "s2",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "s2",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 2, 12, 5)),
+                searchId = "s2",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -232,7 +244,7 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
     lines.size shouldBe 2
     lines.toArray shouldBe Array(
       "2023-08-02,ACC_45616,1",
-      "2023-08-01,ACC_45616,1",
+      "2023-08-01,ACC_45616,1"
     )
   }
 
@@ -244,14 +256,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "cs1",
-          queriesTexts = Seq("$ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
-              searchId = "cs1",
-              documentId = "ACC_45616"
+          queriesTexts = Seq("ACC_45616"),
+          searchResult = SearchResult(
+            "cs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
+                searchId = "cs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -259,14 +273,16 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "qs1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
-              searchId = "qs1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "qs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
+                searchId = "qs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -290,27 +306,31 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       quickSearches = Seq(
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "qs1",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
-              searchId = "qs1",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "qs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
+                searchId = "qs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         ),
         QuickSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "qs2",
           queryText = "ACC_45616",
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
-              searchId = "qs2",
-              documentId = "ACC_45616"
+          searchResult = SearchResult(
+            "qs2",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
+                searchId = "qs2",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
@@ -333,27 +353,31 @@ class TestTask2 extends AnyFlatSpec with Matchers with TestSparkContext {
       cardSearches = Seq(
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 0)),
-          searchId = "cs1",
-          queriesTexts = Seq("$ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
-              searchId = "cs1",
-              documentId = "ACC_45616"
+          queriesTexts = Seq("ACC_45616"),
+          searchResult = SearchResult(
+            "cs1",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 10)),
+                searchId = "cs1",
+                documentId = "ACC_45616"
+              )
             )
           )
         ),
         CardSearch(
           timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 5)),
-          searchId = "cs2",
-          queriesTexts = Seq("$ACC_45616"),
-          relatedDocuments = Seq("ACC_45616"),
-          docOpens = Seq(
-            DocumentOpen(
-              timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
-              searchId = "cs2",
-              documentId = "ACC_45616"
+          queriesTexts = Seq("ACC_45616"),
+          searchResult = SearchResult(
+            "cs2",
+            Seq("ACC_45616"),
+            docOpens = Seq(
+              DocumentOpen(
+                timestamp = Some(LocalDateTime.of(2023, 8, 1, 12, 15)),
+                searchId = "cs2",
+                documentId = "ACC_45616"
+              )
             )
           )
         )
