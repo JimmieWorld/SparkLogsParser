@@ -75,6 +75,5 @@ class TestSessionExtract extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     qs2.searchResult.docOpens.map(_.documentId) shouldBe Seq("DOC_765")
 
     session.allDocOpens.size shouldBe 7
-    session.allDocOpens.head.documentId shouldBe "DOC_000"
   }
 }

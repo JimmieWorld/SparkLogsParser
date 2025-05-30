@@ -23,7 +23,7 @@ object DocumentOpen extends EventParser {
 
     val searchId = splitLineWithDoc(splitLineWithDoc.length - 2)
     val documentId = splitLineWithDoc.last
-
+    
     val timestamp = DateTimeParser.parseDateTime(splitLineWithDoc(1), context)
 
     context.sessionBuilder.docOpens :+= DocumentOpen(timestamp, searchId, documentId)

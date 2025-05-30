@@ -9,7 +9,7 @@ import scala.util.Try
 
 object DateTimeParser {
 
-  private val formats = Iterator(
+  private val formats = Array(
     DateTimeFormatter.ofPattern("dd.MM.yyyy_HH:mm:ss"),
     DateTimeFormatter.ofPattern("EEE,_d_MMM_yyyy_HH:mm:ss", Locale.ENGLISH)
   )

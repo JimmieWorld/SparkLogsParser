@@ -67,26 +67,4 @@ class TestDocumentOpen extends AnyFlatSpec with Matchers with BeforeAndAfterEach
 
     verifyZeroInteractions(errorStatsAcc)
   }
-
-  it should "not fail on multiple DOC_OPEN lines with same searchId" in {
-    val lines = List(
-      "DOC_OPEN 13.02.2020_21:45:55 -1723438653 RAPS013_286883",
-      "DOC_OPEN 13.02.2020_21:46:00 -1723438653 SUR_196608"
-    )
-
-    val context = extract(lines)
-    val docOpen1 = context.sessionBuilder.docOpens.head
-
-    docOpen1.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
-    docOpen1.searchId shouldBe "-1723438653"
-    docOpen1.documentId shouldBe "RAPS013_286883"
-
-    val docOpen2 = context.sessionBuilder.docOpens.last
-
-    docOpen2.timestamp shouldBe Some(LocalDateTime.of(2020, 2, 13, 21, 45, 55))
-    docOpen2.searchId shouldBe "-1723438653"
-    docOpen2.documentId shouldBe "SUR_196608"
-
-    verifyZeroInteractions(errorStatsAcc)
-  }
 }

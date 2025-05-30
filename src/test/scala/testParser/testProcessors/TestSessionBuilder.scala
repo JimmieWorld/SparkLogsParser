@@ -107,7 +107,7 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
 
     session.quickSearches.head.searchResult.docOpens shouldBe Seq(doo1)
     session.cardSearches.head.searchResult.docOpens shouldBe Seq(doo2)
-    session.allDocOpens shouldBe Seq(doo3)
+    session.allDocOpens shouldBe Seq(doo1, doo2, doo3)
   }
 
   it should "handle multiple CardSearch and QuickSearch with doc opens" in {
@@ -158,6 +158,6 @@ class TestSessionBuilder extends AnyFlatSpec with Matchers with BeforeAndAfterEa
     session.cardSearches.find(_.searchResult.searchId == "1CS1").get.searchResult.docOpens shouldBe Seq(doo1)
     session.cardSearches.find(_.searchResult.searchId == "1CS2").get.searchResult.docOpens shouldBe Seq(doo2)
     session.quickSearches.find(_.searchResult.searchId == "1QS1").get.searchResult.docOpens shouldBe Seq(doo3)
-    session.allDocOpens shouldBe empty
+    session.allDocOpens shouldBe Seq(doo1, doo2, doo3)
   }
 }

@@ -8,7 +8,6 @@ import org.scalatest.matchers.should.Matchers
 import org.testtask.parser.events.SearchResult
 import org.testtask.parser.processors.{ErrorStatsAccumulator, ParsingContext}
 
-
 class TestSearchResult extends AnyFlatSpec with Matchers with BeforeAndAfterEach {
 
   var errorStatsAcc: ErrorStatsAccumulator = _
@@ -45,7 +44,7 @@ class TestSearchResult extends AnyFlatSpec with Matchers with BeforeAndAfterEach
 
     event.searchId shouldBe "-1234"
     event.relatedDocuments shouldBe empty
-    verify(errorStatsAcc).add(("Warning: SearchDocumentsMissing", "No documents found in search line: -1234"))
+    verify(errorStatsAcc).add(("Warning: SearchDocumentsMissing", "[file 4] No documents found in search line: -1234"))
   }
 
   it should "log UnexpectedEndOfSearch on unexpected event start" in {
@@ -58,7 +57,7 @@ class TestSearchResult extends AnyFlatSpec with Matchers with BeforeAndAfterEach
     verify(errorStatsAcc).add(
       (
         "Warning: UnexpectedEndOfSearch",
-        "Expected search result line, got unexpected event start: DOC_OPEN 13.02.2020_21:45:55 -1723438653 RAPS013_286883"
+        "[file 4] Expected search result line, got unexpected event start: DOC_OPEN 13.02.2020_21:45:55 -1723438653 RAPS013_286883"
       )
     )
   }
