@@ -20,9 +20,9 @@ object CardSearch extends EventParser {
   ): Unit = {
     val firstLine = context.lines.next()
 
-    val splitFirstLine = firstLine.trim.split("\\s+")
+    val Array(_, rawDateTime) = firstLine.trim.split("\\s+")
 
-    val dateTime = DateTimeParser.parseDateTime(splitFirstLine.last, context)
+    val dateTime = DateTimeParser.parseDateTime(rawDateTime, context)
 
     val queryLines = scala.collection.mutable.ListBuffer[String]()
     while (context.lines.hasNext && !context.lines.head.startsWith("CARD_SEARCH_END")) {

@@ -17,7 +17,7 @@ case class Session(
 
 object Session {
 
-  private val key2parsers = {
+  private val key2parser = {
     Seq(
       CardSearch,
       QuickSearch,
@@ -40,7 +40,7 @@ object Session {
           context.sessionBuilder.sessionEnd = DateTimeParser.parseDateTime(splitLine.last, context)
           context.lines.next()
         } else {
-          key2parsers.find { case (key, _) => line.startsWith(key) }.map(_._2).get.parse(context)
+          key2parser.find { case (key, _) => line.startsWith(key) }.map(_._2).get.parse(context)
         }
       } catch {
         case e: Exception =>

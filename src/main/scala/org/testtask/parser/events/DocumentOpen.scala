@@ -19,12 +19,9 @@ object DocumentOpen extends EventParser {
       context: ParsingContext
   ): Unit = {
     val lineWithDoc = context.lines.next()
-    val splitLineWithDoc = lineWithDoc.split("\\s+")
+    val Array(_, rawDateTime, searchId, documentId) = lineWithDoc.split("\\s+")
 
-    val searchId = splitLineWithDoc(splitLineWithDoc.length - 2)
-    val documentId = splitLineWithDoc.last
-
-    val dateTime = DateTimeParser.parseDateTime(splitLineWithDoc(1), context)
+    val dateTime = DateTimeParser.parseDateTime(rawDateTime, context)
 
     context.sessionBuilder.docOpens :+= DocumentOpen(dateTime, searchId, documentId)
   }
