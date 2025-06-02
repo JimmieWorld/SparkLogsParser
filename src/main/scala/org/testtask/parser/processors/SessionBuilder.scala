@@ -31,7 +31,7 @@ case class SessionBuilder(
     val searchId2DateTime = (
       cardSearches.map(cs => cs.searchResult.searchId -> cs.dateTime) ++
         quickSearches.map(qs => qs.searchResult.searchId -> qs.dateTime)
-    ).collect { case (id, Some(ts)) => id -> ts }
+    ).collect { case (id, Some(dt)) => id -> dt }
     .toMap
 
     docOpens.foreach { docOpen =>

@@ -23,7 +23,7 @@ object Session {
       QuickSearch,
       DocumentOpen
     ).flatMap { parser =>
-      parser.keys().map(key => key -> parser)
+      parser.keys().map(_ -> parser)
     }.toMap
   }
 
